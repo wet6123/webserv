@@ -2,6 +2,8 @@
 #define DEFINE_HPP
 
 #include <string>
+extern int LineCount;
+extern int ssPos;
 
 typedef enum { GET, POST, DELETE } Methods;
 

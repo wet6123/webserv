@@ -12,12 +12,12 @@ public:
   Location(const Location &loc);
   Location &operator=(const Location &loc);
   ~Location();
-  int GetMethods() const;
-  bool GetIsAutoindex() const;
-  std::string GetCgiPath() const;
-  std::string GetUriPath() const;
-  std::string GetRootPath() const;
-  std::string GetRedirectPath() const;
+  int getMethods() const;
+  bool getIsAutoindex() const;
+  std::string getCgiPath() const;
+  std::string getUriPath() const;
+  std::string getRootPath() const;
+  std::string getRedirectPath() const;
 };
 
 #endif

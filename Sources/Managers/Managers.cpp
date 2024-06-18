@@ -1,3 +1,3 @@
 #include "../../Headers/Managers/Managers.hpp"
 
-void Managers::Init(std::string path) { Config.Init(path); }
+void Managers::init(std::string path) { Config.init(path); }

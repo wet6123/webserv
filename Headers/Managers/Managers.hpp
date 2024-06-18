@@ -6,7 +6,7 @@
 class Managers {
 public:
   static ConfigManager Config;
-  static void Init(std::string path);
+  static void init(std::string path);
 };
 
 #endif

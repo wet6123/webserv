@@ -17,15 +17,13 @@ public:
 
 #define FT_THROW(message, exception)                                           \
   do {                                                                         \
-    webserv::ThrowException(__FILE__, __LINE__, message);                      \
+    webserv::throwException(__FILE__, __LINE__, message);                      \
     throw CustomException(exception);                                          \
   } while (0)
 
 namespace webserv {
-void ThrowException(const std::string &file, int line,
+void throwException(const std::string &file, int line,
                     const std::string &message);
 }
-
-void CannotFindFileException(std::string filePath, std::string detail);
 
 #endif
