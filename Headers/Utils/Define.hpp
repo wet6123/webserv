@@ -2,10 +2,14 @@
 #define DEFINE_HPP
 
 #include <string>
+#include <map>
 extern int LineCount;
-extern int ssPos;
 
-typedef enum { GET, POST, DELETE } Methods;
+typedef enum { NONE, GET, POST, DELETE } Methods;
+
+typedef std::vector<std::string> t_vecString;
+typedef std::map<std::string, t_vecString> Dict;
+typedef std::pair<std::string, t_vecString> DictElem;
 
 typedef struct {
   int _port;

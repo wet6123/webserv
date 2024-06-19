@@ -17,13 +17,12 @@ public:
 
 #define FT_THROW(message, exception)                                           \
   do {                                                                         \
-    webserv::throwException(__FILE__, __LINE__, message);                      \
+    webserv::throwException(message);                                          \
     throw CustomException(exception);                                          \
   } while (0)
 
 namespace webserv {
-void throwException(const std::string &file, int line,
-                    const std::string &message);
+void throwException(const std::string &message);
 }
-
+void ConfigSyntaxException(std::string msg);
 #endif

@@ -1,7 +1,7 @@
 #include "../../Headers/Utils/Utils.hpp"
-#include "../../Headers/Utils/Define.hpp"
-#include "../../Headers/Utils/Exception.hpp"
+#include <map>
 #include <string>
+#include <utility>
 #include <vector>
 
 bool existFile(std::string path) {
@@ -20,15 +20,9 @@ bool existDir(std::string path) {
   return false;
 }
 
-std::string trim(std::string &s) {
+std::string trim(std::string s) {
   std::string r = s.erase(s.find_last_not_of(TRIM_SPACE) + 1);
   return r.erase(0, r.find_first_not_of(TRIM_SPACE));
-}
-std::string rtrim(std::string s) {
-  return s.erase(s.find_last_not_of(TRIM_SPACE) + 1);
-}
-std::string ltrim(std::string s) {
-  return s.erase(0, s.find_first_not_of(TRIM_SPACE));
 }
 
 std::string trimComment(std::string s) {
@@ -64,18 +58,34 @@ std::string itos(int n) {
 
 bool isPrintable(int c) { return (33 <= c && c <= 126); }
 
-int findStartBlockPos(std::stringstream &ss) {
-  while (ss.eof() == false) {
-    char c = ss.get();
+bool isPrintable(std::string str) {
+  bool success = true;
+  size_t len = str.length();
+
+  for (size_t i = 0; i < len; i++) {
+    success &= isPrintable(str[i]);
+    if (success == false)
+      break;
+  }
+  return success;
+}
+
+int findStartBlockPos(StringReader &sr) {
+  size_t startPos = sr.tellg();
+  while (sr.tellg() > -1) {
+    char c = sr.get();
 
     if (isPrintable(c)) {
       if (c == '{')
-        return ss.tellg();
+        return sr.tellg();
       else if (c == '\n')
         LineCount++;
       else {
+        sr.seekg(startPos);
         std::string msg =
-            strjoin("Command not found, Line : ", itos(LineCount));
+            strjoin("Command not found, Line : ",
+                    itos(LineCount),
+                    sr.readline());
         FT_THROW(msg, "ConfigSyntaxException");
       }
     }
@@ -84,13 +94,13 @@ int findStartBlockPos(std::stringstream &ss) {
   return 0;
 }
 
-int findEndBlockPos(std::stringstream &ss) {
+int findEndBlockPos(StringReader &sr) {
   int remainCnt = 1;
-  int startPos = ss.tellg();
+  int startPos = sr.tellg();
   int result = 0;
 
-  while (ss.eof() == false) {
-    char c = ss.get();
+  while (sr.eof() == false) {
+    char c = sr.get();
 
     switch (c) {
     case '{':
@@ -101,8 +111,8 @@ int findEndBlockPos(std::stringstream &ss) {
     }
 
     if (remainCnt == 0) {
-      result = ss.tellg();
-      ss.seekg(startPos);
+      result = sr.tellg();
+      sr.seekg(startPos);
       break;
     }
   }
@@ -122,7 +132,7 @@ std::string fileToString(std::string path) {
   return total;
 }
 
-std::string fileToString(std::fstream file) {
+std::string fileToString(std::fstream &file) {
   std::string total;
   while (file.eof() == false) {
     std::string line;
@@ -133,21 +143,51 @@ std::string fileToString(std::fstream file) {
   return total;
 }
 
-std::vector<std::string> strSplit(std::string str, char delimiter) {
-  std::vector<std::string> ret;
+t_vecString strSplit(std::string str, char delimiter, bool mustTrim = true) {
+  t_vecString ret;
   int start = 0;
   int pos = 0;
 
   while (true) {
-    pos = str.find(':', start);
+    pos = str.find(delimiter, start);
     if (pos == std::string::npos)
       break;
-    if (pos == start)
+    if (pos == start) {
+      start++;
       continue;
-    ret.push_back(str.substr(start, pos - start));
+    }
+    std::string word = str.substr(start, pos - start);
+    size_t len = word.length();
+    if (mustTrim)
+      word = trim(word);
+    if (isPrintable(word) == false) {
+      start += len;
+      continue;
+    }
+    ret.push_back(word);
     start = pos + 1;
   }
 
-  ret.push_back(str.substr(start));
+  std::string word = str.substr(start, pos - start);
+  if (mustTrim)
+    word = trim(word);
+  if (isPrintable(word))
+    ret.push_back(str.substr(start));
+  return ret;
+}
+
+DictElem makeDictElem(std::string str) {
+  DictElem ret;
+
+  std::string key;
+  t_vecString values;
+
+  t_vecString words = strSplit(str, ' ', false);
+  key = words[0];
+  for (size_t i = 1; i < words.size(); i++)
+    values.push_back(words[i]);
+
+  ret.first = key;
+  ret.second = values;
   return ret;
 }

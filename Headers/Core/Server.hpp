@@ -4,6 +4,7 @@
 #include "Location.hpp"
 #include <fstream>
 #include <vector>
+#include "../Utils/StringReader.hpp"
 
 class Server {
 private:
@@ -16,6 +17,7 @@ public:
   Server &operator=(const Server &serv);
   ~Server();
 
+  void pushBackLocation(Location loc);
   /* #region getter */
   Location getLocation(std::string uri) const;
   std::vector<Location> getLocations() const;
@@ -31,5 +33,5 @@ public:
   std::string getRootPath() const;
   /* #endregion */
 };
-
+Server ParseServer(StringReader &sr);
 #endif

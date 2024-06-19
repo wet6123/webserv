@@ -1,4 +1,5 @@
 #include "../../Headers/Managers/ConfigManager.hpp"
+#include "../../Headers/Utils/StringReader.hpp"
 
 ConfigManager::ConfigManager() {}
 ConfigManager::ConfigManager(const ConfigManager &conf) { *this = conf; }
@@ -27,8 +28,7 @@ std::vector<Server> ConfigManager::getServers() const { return _servers; }
 
 void ConfigManager::init(std::string path) {
   if (existFile(path) == false)
-    // CannotFindFileException(path, "CannotFindFileException");
-    FT_THROW("Can not found [" + path + "], ",
+    FT_THROW("Can not found file [" + path + "], ",
              CustomException("CannotFindFileException"));
 }
 
@@ -36,13 +36,25 @@ void ConfigManager::parseConfig(std::string path) {
   std::fstream file(path);
 
   if (file.is_open() == false || file.bad() || file.fail())
-    FT_THROW("Is not valid config file", "NotValidFileException");
+    FT_THROW("Can not open file", "NotValidFileException");
 
-  // 파일 내용 string으로 변환
-  std::string total;
-  while (file.eof() == false) {
-    std::string line;
-    getline(file, line);
-    total += line;
+  StringReader sr(fileToString(file));
+  std::string aspireText = "server";
+  size_t textLen = aspireText.length();
+
+  while (sr.tellg() > -1) {
+    std::string line = sr.readline();
+
+    line = trimComment(line);
+    LineCount++;
+    if (line.empty() || line.length() == 0)
+      continue;
+    
+    size_t pos = line.find(aspireText);
+    if (pos != std::string::npos) {
+      sr.seekg(pos + textLen);
+      sr.seekg(findStartBlockPos(sr));
+      _servers.push_back(ParseServer(sr));
+    }
   }
 }
