@@ -33,11 +33,12 @@ void ConfigManager::init(std::string path) {
 }
 
 void ConfigManager::parseConfig(std::string path) {
-  std::fstream file(path);
+  std::fstream file;
 
-  if (file.is_open() == false || file.bad() || file.fail())
+  if (existFile(path))
     FT_THROW("Can not open file", "NotValidFileException");
 
+  file.open(path.c_str());
   StringReader sr(fileToString(file));
   std::string aspireText = "server";
   size_t textLen = aspireText.length();
@@ -54,7 +55,7 @@ void ConfigManager::parseConfig(std::string path) {
     if (pos != std::string::npos) {
       sr.seekg(pos + textLen);
       sr.seekg(findStartBlockPos(sr));
-      _servers.push_back(ParseServer(sr));
+      _servers.push_back(parseServer(sr));
     }
   }
 }

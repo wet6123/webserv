@@ -19,11 +19,12 @@ std::string strjoin(std::string s1, std::string s2);
 std::string strjoin(std::string s1, std::string s2, std::string s3);
 std::string strjoin(std::string s1, std::string s2, std::string s3,
                     std::string s4);
+int stringToInt(std::string str);
 std::string itos(int n);
 int findStartBlockPos(StringReader &sr);
 int findEndBlockPos(StringReader &sr);
 std::string fileToString(std::string path);
 std::string fileToString(std::fstream &file);
-std::vector<std::string> strSplit(std::string str, char delimiter);
+t_vecString strSplit(std::string str, char delimiter, bool mustTrim);
 DictElem makeDictElem(std::string str);
 #endif

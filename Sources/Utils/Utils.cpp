@@ -5,9 +5,13 @@
 #include <vector>
 
 bool existFile(std::string path) {
-  std::fstream file(path);
+  std::fstream file;
+  bool success = true;
 
-  return file.is_open();
+  file.open(path.c_str());
+  success &= !(file.is_open() == false || file.bad() || file.fail());
+  file.close();
+  return success;
 }
 
 bool existDir(std::string path) {
@@ -56,6 +60,26 @@ std::string itos(int n) {
   return ret;
 }
 
+int stringToInt(std::string str) {
+  int ret = 0;
+  bool isNegative = false;
+  size_t i = 0;
+
+  if (str[i] == '+' || str[i] == '-') {
+    isNegative = (str[i] == '-');
+    i++;
+  }
+
+  for (; str[i]; i++) {
+    if ('0' <= str[i] && str[i] <= '9') {
+      ret += str[i] + '0';
+    } else {
+      break;
+    }
+  }
+  return ret * (isNegative) ? -1 : 1;
+}
+
 bool isPrintable(int c) { return (33 <= c && c <= 126); }
 
 bool isPrintable(std::string str) {
@@ -102,14 +126,11 @@ int findEndBlockPos(StringReader &sr) {
   while (sr.eof() == false) {
     char c = sr.get();
 
-    switch (c) {
-    case '{':
+    if (c == '{')
       remainCnt++;
-      break;
-    case '}':
+    else if (c == '}')
       remainCnt--;
-    }
-
+    
     if (remainCnt == 0) {
       result = sr.tellg();
       sr.seekg(startPos);
@@ -120,9 +141,10 @@ int findEndBlockPos(StringReader &sr) {
 }
 
 std::string fileToString(std::string path) {
-  std::fstream file(path);
+  std::fstream file;
 
   std::string total;
+  file.open(path.c_str());
   while (file.eof() == false) {
     std::string line;
     getline(file, line);
@@ -143,10 +165,10 @@ std::string fileToString(std::fstream &file) {
   return total;
 }
 
-t_vecString strSplit(std::string str, char delimiter, bool mustTrim = true) {
+t_vecString strSplit(std::string str, char delimiter, bool mustTrim) {
   t_vecString ret;
-  int start = 0;
-  int pos = 0;
+  size_t start = 0;
+  size_t pos = 0;
 
   while (true) {
     pos = str.find(delimiter, start);

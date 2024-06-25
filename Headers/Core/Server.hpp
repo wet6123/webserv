@@ -33,5 +33,5 @@ public:
   std::string getRootPath() const;
   /* #endregion */
 };
-Server ParseServer(StringReader &sr);
+Server parseServer(StringReader &sr);
 #endif

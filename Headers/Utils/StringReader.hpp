@@ -22,8 +22,7 @@ protected:
   }
 
 protected:
-  std::streampos seekoff(std::streamoff off, std::ios_base::seekdir way,
-                         std::ios_base::openmode which) {
+  std::streampos seekoff(std::streamoff off, std::ios_base::seekdir way) {
     if (way == std::ios_base::beg) {
       setg(eback(), eback() + off, egptr());
     } else if (way == std::ios_base::cur) {
@@ -35,7 +34,7 @@ protected:
   }
 
   // Override seekpos to support tellg
-  std::streampos seekpos(std::streampos pos, std::ios_base::openmode which) {
+  std::streampos seekpos(std::streampos pos) {
     setg(eback(), eback() + pos, egptr());
     return pos;
   }

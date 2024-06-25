@@ -3,6 +3,7 @@
 
 #include <string>
 #include <map>
+#include <vector>
 extern int LineCount;
 
 typedef enum { NONE, GET, POST, DELETE } Methods;
@@ -31,6 +32,7 @@ typedef struct {
 
   std::string _cgiPath;
   std::string _uriPath;
+  std::string _idxPath;
   std::string _rootPath;
   std::string _redirectPath;
 } LocationData;
