@@ -21,8 +21,9 @@ protected:
     return traits_type::to_int_type(*gptr());
   }
 
-protected:
-  std::streampos seekoff(std::streamoff off, std::ios_base::seekdir way) {
+  std::streampos seekoff(std::streamoff off, std::ios_base::seekdir way,
+                         std::ios_base::openmode which) {
+    (void)which;
     if (way == std::ios_base::beg) {
       setg(eback(), eback() + off, egptr());
     } else if (way == std::ios_base::cur) {
@@ -33,24 +34,24 @@ protected:
     return gptr() - eback();
   }
 
-  // Override seekpos to support tellg
-  std::streampos seekpos(std::streampos pos) {
+  std::streampos seekpos(std::streampos pos,
+                         std::ios_base::openmode which)  {
+    (void)which;
     setg(eback(), eback() + pos, egptr());
     return pos;
   }
 };
 
 class StringReader : public std::istream {
-
 private:
   StringReader();
   StringReader(const StringReader &sr);
   StringReader &operator=(const StringReader &sr);
-  std::string _str;
   MyStreamBuf buf;
 
 public:
-  StringReader(const std::string &str);
+  std::string _str;
+  StringReader(std::string str);
   ~StringReader();
   std::string subStr(int start) const;
   std::string subStr(int start, int count) const;

@@ -9,7 +9,17 @@ bool existFile(std::string path) {
   bool success = true;
 
   file.open(path.c_str());
-  success &= !(file.is_open() == false || file.bad() || file.fail());
+  bool a = true;
+  a &= file.is_open();
+  a &= file.fail();
+  success &=
+      !(file.is_open() == false || file.fail());
+  if (file.is_open() == false)
+    std::cout << "isopen" << std::endl;
+  if (file.bad())
+    std::cout << "bad" << std::endl;
+  if (file.fail())
+    std::cout << "fail" << std::endl;
   file.close();
   return success;
 }
@@ -77,7 +87,7 @@ int stringToInt(std::string str) {
       break;
     }
   }
-  return ret * (isNegative) ? -1 : 1;
+  return ret * (isNegative ? -1 : 1);
 }
 
 bool isPrintable(int c) { return (33 <= c && c <= 126); }
@@ -95,45 +105,36 @@ bool isPrintable(std::string str) {
 }
 
 int findStartBlockPos(StringReader &sr) {
-  size_t startPos = sr.tellg();
-  while (sr.tellg() > -1) {
-    char c = sr.get();
+  int result = 0;
+  int len = sr._str.length();
 
-    if (isPrintable(c)) {
-      if (c == '{')
-        return sr.tellg();
-      else if (c == '\n')
-        LineCount++;
-      else {
-        sr.seekg(startPos);
-        std::string msg =
-            strjoin("Command not found, Line : ",
-                    itos(LineCount),
-                    sr.readline());
-        FT_THROW(msg, "ConfigSyntaxException");
+  for (int i = sr.tellg(); i < len; i++) {
+    if (isPrintable(sr[i])) {
+      if (sr[i] == '{') {
+        result = i;
+        break;
+      } else {
+        ConfigSyntaxException("Command not found");
       }
     }
   }
 
-  return 0;
+  return result;
 }
 
 int findEndBlockPos(StringReader &sr) {
   int remainCnt = 1;
-  int startPos = sr.tellg();
+  int len = sr._str.length();
   int result = 0;
 
-  while (sr.eof() == false) {
-    char c = sr.get();
-
-    if (c == '{')
+  for (int i = sr.tellg(); i < len; i++) {
+    if (sr[i] == '{')
       remainCnt++;
-    else if (c == '}')
+    else if (sr[i] == '}')
       remainCnt--;
-    
+
     if (remainCnt == 0) {
-      result = sr.tellg();
-      sr.seekg(startPos);
+      result = i;
       break;
     }
   }
@@ -148,8 +149,9 @@ std::string fileToString(std::string path) {
   while (file.eof() == false) {
     std::string line;
     getline(file, line);
-    total += line;
+    total += line + "\n";
   }
+  file.close();
 
   return total;
 }
@@ -159,7 +161,7 @@ std::string fileToString(std::fstream &file) {
   while (file.eof() == false) {
     std::string line;
     getline(file, line);
-    total += line;
+    total += (line + '\n');
   }
 
   return total;

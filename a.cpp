@@ -1,4 +1,5 @@
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <istream>
 #include <map>
@@ -21,10 +22,8 @@ protected:
     }
     return traits_type::to_int_type(*gptr());
   }
-
-protected:
-  std::streampos seekoff(std::streamoff off, std::ios_base::seekdir way,
-                         std::ios_base::openmode which) {
+  pos_type seekoff(off_type off, std::ios_base::seekdir way,
+                   std::ios_base::openmode which) {
     if (way == std::ios_base::beg) {
       setg(eback(), eback() + off, egptr());
     } else if (way == std::ios_base::cur) {
@@ -35,10 +34,8 @@ protected:
     return gptr() - eback();
   }
 
-  // Override seekpos to support tellg
-  std::streampos seekpos(std::streampos pos, std::ios_base::openmode which) {
-    setg(eback(), eback() + pos, egptr());
-    return pos;
+  pos_type seekpos(pos_type pos, std::ios_base::openmode which) {
+    return seekoff(pos, std::ios_base::beg, which);
   }
 };
 
@@ -63,6 +60,7 @@ public:
 
 StringReader::StringReader(const std::string &str)
     : std::istream(&buf), buf(str) {
+  rdbuf(&buf);
   _str = str;
 }
 
@@ -98,95 +96,147 @@ std::string StringReader::readline() {
 
 char StringReader::operator[](int i) const { return _str[i]; }
 
-bool isPrintable(int c) { return (33 <= c && c <= 126); }
-
-bool isPrintable(std::string str) {
-  bool success = false;
-  size_t len = str.length();
-
-  for (size_t i = 0; i < len; i++) {
-    success |= isPrintable(str[i]);
-    if (success == true)
-      break;
-  }
-  return success;
-}
-#define TRIM_SPACE " \n\v\t"
-
-std::string rtrim(std::string s) {
-  return s.erase(s.find_last_not_of(TRIM_SPACE) + 1);
-}
-std::string ltrim(std::string s) {
-  return s.erase(0, s.find_first_not_of(TRIM_SPACE));
-}
-std::string trim(std::string s) {
-  if (s.compare("  server_name localhost")) {
-    std::cout << s << std::endl;
-    for (int i = 0; s[i]; i++) {
-      std::cout << (int)s[i] << ", ";
-    }
-    std::cout << std::endl;
-  }
-
-    std::string r = s.erase(s.find_last_not_of(TRIM_SPACE) + 1);
-    return r.erase(0, r.find_first_not_of(TRIM_SPACE));
-}
-
-std::vector<std::string> strSplit(std::string str, char delimiter, bool mustTrim = true) {
-  std::vector<std::string> ret;
-  int start = 0;
-  int pos = 0;
-
-  while (true) {
-    pos = str.find(delimiter, start);
-    if (pos == std::string::npos)
-      break;
-    if (pos == start) {
-      start++;
-      continue;
-    }
-    std::string word = str.substr(start, pos - start);
-    size_t len = word.length();
-    if (mustTrim) {
-      word = trim(word);
-    }
-    if (isPrintable(word) == false) {
-      start += len;
-      continue;
-    }
-    ret.push_back(word);
-    start = pos + 1;
-  }
-
-  std::string word = str.substr(start, pos - start);
-  if (mustTrim)
-    word = trim(word);
-  if (isPrintable(word))
-    ret.push_back(str.substr(start));
-  return ret;
-}
-
-std::string itos(int n) {
-  std::string ret;
-  bool nagative = false;
-  if (n < 0)
-    nagative = true;
-  while (n >= 10) {
-      ret.insert(0, 1, char((n % 10) + '0'));
-      n /= 10;
-  }
-  ret.insert(0, 1, char((n % 10) + '0'));
-  ret.insert(0, 1, '-');
-  return ret;
-}
+using namespace std;
 
 int main(void) {
-  int a = 1 << 0;
-//   a |= 1 << 1;
-  a |= 1 << 2;
-//   a |= 2;
-//   a |= 3;
+  string a = "hello world!";
+  StringReader sr(a);
 
-  int b = (a & 255) & (1 << 1);
-  std::cout << b << std::endl;
+  // while (sr.tellg() > -1)
+      cout << (char)sr.get() << endl;
+  sr.seekg(2, std::ios_base::beg);
+  cout << (char)sr.get() << endl;
+
+  cout << sr.tellg() << endl;
+
+  // fstream file;
+
+  // file.open("test", ios::trunc | ios::out);
+
+  // int part1 = 6;
+  // int part2 = 25;
+  // int part3 = 39;
+  // int part4 = 30;
+  // int remainPartQuestionCnt = 0;
+  // int curPart = 1;
+
+  // remainPartQuestionCnt = part1;
+  // for (int i = 1; i <= 100; i++) {
+  //     switch (curPart) {
+  //     case 2:
+  //       file << std::setw(4) << i << " : A    B    C    \n\n";
+  //       break;
+  //     default:
+  //       file << std::setw(4) << i << " : A    B    C    D\n\n";
+  //       break;
+  //     }
+
+  //     remainPartQuestionCnt--;
+  //     if (remainPartQuestionCnt == 0) {
+  //       switch (curPart) {
+  //       case 1:
+  //         curPart++;
+  //         remainPartQuestionCnt = part2;
+  //         break;
+  //       case 2:
+  //         curPart++;
+  //         remainPartQuestionCnt = part3;
+  //         break;
+  //       case 3:
+  //         curPart++;
+  //         remainPartQuestionCnt = part4;
+  //         break;
+  //       default:
+  //         break;
+  //       }
+  //     }
+  // }
+  // file.close();
+  // return 0;
 }
+
+// #include <iostream>
+// #include <streambuf>
+// #include <string>
+
+// class MyStreamBuf : public std::streambuf {
+// public:
+//   MyStreamBuf(const std::string &str) {
+//     char *base = const_cast<char *>(str.data());
+//     setg(base, base, base + str.size());
+//   }
+
+// protected:
+//   int underflow() {
+//     if (gptr() == egptr()) {
+//       return traits_type::eof();
+//     }
+//     return traits_type::to_int_type(*gptr());
+//   }
+//   pos_type seekoff(off_type off, std::ios_base::seekdir way,
+//                    std::ios_base::openmode which)  {
+//     if (way == std::ios_base::beg) {
+//       setg(eback(), eback() + off, egptr());
+//     } else if (way == std::ios_base::cur) {
+//       setg(eback(), gptr() + off, egptr());
+//     } else if (way == std::ios_base::end) {
+//       setg(eback(), egptr() + off, egptr());
+//     }
+//     return gptr() - eback();
+//   }
+
+//   pos_type seekpos(pos_type pos, std::ios_base::openmode which)  {
+//     return seekoff(pos, std::ios_base::beg, which);
+//   }
+// };
+
+// #include <iostream>
+// #include <istream>
+// #include <string>
+
+// class StringReader : public std::istream {
+// private:
+//   MyStreamBuf buffer;
+
+// public:
+//   StringReader(const std::string &str) : std::istream(&buffer), buffer(str) {
+//     rdbuf(&buffer);
+//   }
+
+//   // Additional utility functions can be added here
+//   std::string readline() {
+//     std::string line;
+//     std::getline(*this, line);
+//     return line;
+//   }
+// };
+
+// #include <iostream>
+
+// using namespace std;
+// int main() {
+//   std::string testStr = "Hello, world!\nThis is a test string.";
+//   StringReader reader(testStr);
+
+//   // Read the first line
+//   char line1 = reader.get();
+//   std::cout << "Line 1: " << line1 << std::endl;
+
+//   // Seek to the beginning
+//   reader.seekg(0);
+
+//   cout << reader.tellg() << endl;
+  
+//   // Read the first line again
+//   char line2 = reader.get();
+//   std::cout << "Line 2: " << line2 << std::endl;
+
+//   // Seek to the position after "Hello, "
+//   reader.seekg(7);
+
+//   // Read from the current position
+//   char line3 = reader.get();
+//   std::cout << "Line 3: " << line3 << std::endl;
+
+//   return 0;
+// }

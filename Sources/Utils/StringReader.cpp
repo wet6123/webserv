@@ -1,7 +1,8 @@
 #include "../../Headers/Utils/StringReader.hpp"
 #include <istream>
+#include <iostream>
 
-StringReader::StringReader(const std::string &str)
+StringReader::StringReader(std::string str)
     : std::istream(&buf), buf(str) {
   _str = str;
 }

@@ -46,31 +46,33 @@ ServerData makeServerData(Dict dict) {
 
 /* #region parsing */
 void recursiveServerParsing(StringReader &sr, Dict &dict, Server &ret) {
-  if (sr.tellg() == -1) { ConfigSyntaxException("server block was not closed"); }
+  if (sr.tellg() == -1) { return; }
   std::string aspireText = "location";
   size_t textLen = aspireText.length();
 
   std::string line = sr.readline();
   LineCount++;
 
-  t_vecString variables = strSplit(line, ';', false);
-  for (size_t i = 0; i < variables.size(); i++) {
-    DictElem elem = makeDictElem(variables[i]);
-    Dict::iterator it = dict.find(elem.first);
+  if (trim(line).length() != 0) {
+    t_vecString variables = strSplit(line, ';', false);
+    for (size_t i = 0; i < variables.size(); i++) {
+      DictElem elem = makeDictElem(variables[i]);
+      Dict::iterator it = dict.find(elem.first);
 
-    if (elem.first.compare(aspireText)) {
-      if (it != dict.end()) { ConfigSyntaxException(it->first + " was overlaped"); }
-      else { dict[elem.first] = elem.second; }
-    } else {
-      size_t pos = line.find(aspireText);
-      sr.seekg(pos + textLen);
-      sr.seekg(findStartBlockPos(sr));
-      Location loc = parseLocation(sr);
-      loc.setUriPath(it->second[0]);
-      ret.pushBackLocation(loc);
+      if (elem.first.compare(aspireText)) {
+        if (it != dict.end()) { ConfigSyntaxException(it->first + " was overlaped"); }
+        else { dict[elem.first] = elem.second; }
+      } else {
+        size_t pos = line.find(aspireText);
+        int prevPos = (int)sr.tellg() - (line.length() + 1);
+        sr.seekg(pos + textLen + prevPos);
+        sr.seekg(findStartBlockPos(sr));
+        Location loc = parseLocation(sr);
+        loc.setUriPath(it->second[0]);
+        ret.pushBackLocation(loc);
+      }
     }
   }
-
   recursiveServerParsing(sr, dict, ret);
 }
 
@@ -86,7 +88,7 @@ Server parseServer(StringReader &sr) {
 
   // set server into dict
 
-  sr.seekg(endPos);
+  sr.seekg(endPos + 1);
   return ret;
 }
 /* #endregion */

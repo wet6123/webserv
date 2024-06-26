@@ -49,7 +49,7 @@ LocationData makeLocationData(Dict dict) {
 }
 
 void recursiveLocationParsing(StringReader &sr, Dict dict, Location &ret) {
-  if (sr.tellg() == -1) { ConfigSyntaxException("server block was not closed"); }
+  if (sr.tellg() == -1) { return; }
 
   std::string line = sr.readline();
   LineCount++;

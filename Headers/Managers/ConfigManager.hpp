@@ -13,17 +13,16 @@
 
 class ConfigManager {
 private:
-  std::vector<Server> _servers;
-  void parseConfig(std::string path);
+  static std::vector<Server> _servers;
+  static void parseConfig(std::string path);
 
 public:
   ConfigManager();
-  ConfigManager(const ConfigManager &conf);
-  ConfigManager &operator=(const ConfigManager &conf);
   ~ConfigManager();
-  Server getServer(int port) const;
-  std::vector<Server> getServers() const;
+  static Server getServer(int port);
+  static std::vector<Server> getServers();
   static void init(std::string path);
+  static void printConfig();
 };
 
 #endif
