@@ -1,28 +1,39 @@
-#include "../Headers/Socket.hpp"
+#include "../../Headers/Socket.hpp"
 
-Socket::Socket(const std::string &host, const std::string &port) : _host(host.c_str()), _port(port.c_str()), _listenSocket(0) {
-	int status;
-	struct addrinfo hints;
-	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = AF_INET6;
-	hints.ai_socktype = SOCK_STREAM;
-
-	status = getaddrinfo(_host, _port, &hints, &_addr);
-	if (status != 0) {
-		std::cerr << "getaddrinfo: " << gai_strerror(status) << std::endl;
-		throw SocketException("getaddrinfo");
-	}
+Socket::Socket(const std::string &host, const std::string &port) : _host(host.c_str()), _port(port.c_str()), _listenSocket(-1), _clientSocket(-1) {
+	_clientAddrSize = sizeof(_clientAddr);
 }
 
 Socket::~Socket() {
-	freeaddrinfo(_addr);
+	freeaddrinfo(_serverInfo);
 	if (_listenSocket != 0)
 		this->close();
 }
 
+Socket::operator int() const {
+	return _listenSocket;
+}
+
+Socket::operator bool() const {
+	return _listenSocket != -1;
+}
+
+Socket &Socket::operator=(const Socket &rhs) {
+	if (this != &rhs) {
+		_host = rhs._host;
+		_port = rhs._port;
+		_listenSocket = dup(rhs._listenSocket);
+		_clientSocket = dup(rhs._clientSocket);
+		_serverInfo = rhs._serverInfo;
+		_clientAddr = rhs._clientAddr;
+		_clientAddrSize = rhs._clientAddrSize;
+	}
+	return *this;
+}
+
 // socket, bind, listen, accept, close
 void	Socket::socket() {
-	_listenSocket = ::socket(_addr->ai_family, _addr->ai_socktype, _addr->ai_protocol);
+	_listenSocket = ::socket(AF_INET, SOCK_STREAM, 0);
 	if (_listenSocket == -1) {
 		perror("socket");
 		throw SocketException("socket");
@@ -30,10 +41,24 @@ void	Socket::socket() {
 }
 
 void	Socket::bind() {
-	if (::bind(_listenSocket, _addr->ai_addr, _addr->ai_addrlen) == -1) {
+	struct addrinfo hints;
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_INET;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_protocol = IPPROTO_TCP;
+
+	int status = getaddrinfo(_host, _port, &hints, &_serverInfo);
+	if (status != 0) {
+		std::cerr << "getaddrinfo: " << gai_strerror(status) << std::endl;
+		throw SocketException("getaddrinfo");
+	}
+
+	if (::bind(_listenSocket, _serverInfo->ai_addr, _serverInfo->ai_addrlen) == -1) {
 		std::cerr << "bind: " << strerror(errno) << std::endl;
 		throw SocketException("bind");
 	}
+
 }
 
 void	Socket::listen(int backlog) {
@@ -44,7 +69,7 @@ void	Socket::listen(int backlog) {
 }
 
 int		Socket::accept() {
-	_clientSocket = ::accept(_listenSocket, NULL, NULL);
+	_clientSocket = ::accept(_listenSocket, (struct sockaddr *)&_clientAddr, &_clientAddrSize);
 
 	if (_clientSocket == -1) {
 		if (errno == EAGAIN || errno == EWOULDBLOCK) {
@@ -66,6 +91,26 @@ void	Socket::close() {
 	}
 }
 
+int Socket::send(const char *buf, size_t len, int flags) {
+	int status = ::send(_clientSocket, buf, len, flags);
+	if (status == -1) {
+		std::cerr << "send: " << strerror(errno) << std::endl;
+		throw SocketException("send");
+	}
+	return status;
+}
+
+int Socket::recv(char *buf, size_t len, int flags) {
+	int status = ::recv(_clientSocket, buf, len, flags);
+	if (status == -1) {
+		if (errno == EWOULDBLOCK || errno == EAGAIN) {
+			return status;
+		}
+		std::cerr << "recv: " << strerror(errno) << std::endl;
+		throw SocketException("recv");
+	}
+	return status;
+}
 
 // set functions
 void	Socket::setsockopt(int level, int optname, int opt) {
@@ -76,12 +121,6 @@ void	Socket::setsockopt(int level, int optname, int opt) {
 	}
 }
 
-void	Socket::setAddrInfo(int family, int socktype, int protocol, int flags) {
-	_addr->ai_family = family;
-	_addr->ai_socktype = socktype;
-	_addr->ai_protocol = protocol;
-	_addr->ai_flags = flags;
-}
 
 void	Socket::setNonBlocking(int socket) {
 	int flags = fcntl(socket, F_GETFL, 0);
@@ -111,31 +150,21 @@ const char *Socket::getPort() const {
 	return _port;
 }
 
-int Socket::getAddrInfoFamily() const {
-	return _addr->ai_family;
+std::string Socket::getServerIP() const {
+	
+	char ip[INET_ADDRSTRLEN];
+	inet_ntop(AF_INET, &((struct sockaddr_in *)_serverInfo->ai_addr)->sin_addr, ip, INET_ADDRSTRLEN);
+	return std::string(ip);
+
 }
 
-int Socket::getAddrInfoSocktype() const {
-	return _addr->ai_socktype;
+std::string Socket::getClientIP() const {
+
+	char ip[INET_ADDRSTRLEN];
+	inet_ntop(AF_INET, &((struct sockaddr_in *)&_clientAddr)->sin_addr, ip, INET_ADDRSTRLEN);
+	return std::string(ip);
 }
 
-int Socket::getAddrInfoProtocol() const {
-	return _addr->ai_protocol;
-}
-
-int Socket::getAddrInfoFlags() const {
-	return _addr->ai_flags;
-}
-
-const char *Socket::getListenSocketIP() const {
-    char ipv6str[INET6_ADDRSTRLEN];
-    if (::inet_ntop(AF_INET6, &((struct sockaddr_in6 *)_addr->ai_addr)->sin6_addr, ipv6str, INET6_ADDRSTRLEN) == NULL) {
-		std::cerr << "inet_ntop: " << strerror(errno) << std::endl;
-		throw SocketException("inet_ntop");
-	}
-
-    return ipv6str;
-}
 
 void	Socket::setAutoSockopt() {
 	int opt = 1;
