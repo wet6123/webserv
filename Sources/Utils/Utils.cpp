@@ -12,14 +12,7 @@ bool existFile(std::string path) {
   bool a = true;
   a &= file.is_open();
   a &= file.fail();
-  success &=
-      !(file.is_open() == false || file.fail());
-  if (file.is_open() == false)
-    std::cout << "isopen" << std::endl;
-  if (file.bad())
-    std::cout << "bad" << std::endl;
-  if (file.fail())
-    std::cout << "fail" << std::endl;
+  success &= !(file.is_open() == false || file.fail());
   file.close();
   return success;
 }
@@ -40,11 +33,13 @@ std::string trim(std::string s) {
 }
 
 std::string trimComment(std::string s) {
-  size_t i = s.find("#");
-  return i == std::string::npos ? s : s.substr(0, i);
+  size_t pos = s.find('#');
+  return pos == std::string::npos ? s : s.substr(0, pos);
 }
 
-bool stringStartWith(std::string str, std::string find) {
+bool stringStartWith(std::string str, std::string find, bool mustTrim = false) {
+  if (mustTrim)
+    str = trim(str);
   std::string sub = str.substr(0, find.length());
   return !sub.compare(find);
 }
@@ -82,7 +77,8 @@ int stringToInt(std::string str) {
 
   for (; str[i]; i++) {
     if ('0' <= str[i] && str[i] <= '9') {
-      ret += str[i] + '0';
+      ret *= 10;
+      ret += str[i] - '0';
     } else {
       break;
     }
@@ -170,33 +166,20 @@ std::string fileToString(std::fstream &file) {
 t_vecString strSplit(std::string str, char delimiter, bool mustTrim) {
   t_vecString ret;
   size_t start = 0;
-  size_t pos = 0;
 
-  while (true) {
-    pos = str.find(delimiter, start);
-    if (pos == std::string::npos)
-      break;
-    if (pos == start) {
-      start++;
-      continue;
-    }
-    std::string word = str.substr(start, pos - start);
-    size_t len = word.length();
-    if (mustTrim)
-      word = trim(word);
-    if (isPrintable(word) == false) {
-      start += len;
-      continue;
-    }
-    ret.push_back(word);
-    start = pos + 1;
-  }
-
-  std::string word = str.substr(start, pos - start);
   if (mustTrim)
-    word = trim(word);
-  if (isPrintable(word))
-    ret.push_back(str.substr(start));
+    str = trim(str);
+
+  size_t len = str.length();
+  while (start < len) {
+    size_t pos = start;
+    while (str[pos] && str[pos] != delimiter)
+      pos++;
+    ret.push_back(str.substr(start, pos - start));
+    while (str[pos] && str[pos] == delimiter)
+      pos++;
+    start = pos;
+  }
   return ret;
 }
 
@@ -206,7 +189,8 @@ DictElem makeDictElem(std::string str) {
   std::string key;
   t_vecString values;
 
-  t_vecString words = strSplit(str, ' ', false);
+  t_vecString words = strSplit(str, ' ', true);
+
   key = words[0];
   for (size_t i = 1; i < words.size(); i++)
     values.push_back(words[i]);

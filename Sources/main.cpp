@@ -12,9 +12,6 @@ int main(int ac, char *av[]) {
 
   Managers::init(path);
   Managers::Config.printConfig();
-  // StringReader sr("hello world!");
-  // sr.get();
-  // std::cout << sr.tellg() << std::endl;
 
   return 0;
 }

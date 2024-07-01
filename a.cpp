@@ -93,22 +93,87 @@ std::string StringReader::readline() {
   }
   return line;
 }
+#define TRIM_SPACE " \n\v\t"
+typedef std::vector<std::string> t_vecString;
 
 char StringReader::operator[](int i) const { return _str[i]; }
+std::string trim(std::string s) {
+  std::string r = s.erase(s.find_last_not_of(TRIM_SPACE) + 1);
+  return r.erase(0, r.find_first_not_of(TRIM_SPACE));
+}
+
+bool isPrintable(int c) { return (33 <= c && c <= 126); }
+
+bool isPrintable(std::string str) {
+  bool success = true;
+  size_t len = str.length();
+
+  for (size_t i = 0; i < len; i++) {
+    success &= isPrintable(str[i]);
+    if (success == false)
+      break;
+  }
+  return success;
+}
+t_vecString strSplit(std::string str, char delimiter, bool mustTrim) {
+  t_vecString ret;
+  size_t start = 0;
+
+  if (mustTrim)
+    str = trim(str);
+
+  size_t len = str.length();
+  while (start < len) {
+    size_t pos = start;
+    while (str[pos] && str[pos] != delimiter)
+      pos++;
+    ret.push_back(str.substr(start, pos - start));
+    while (str[pos] && str[pos] == delimiter)
+      pos++;
+    start = pos;
+  }
+  return ret;
+}
 
 using namespace std;
 
+int stringToInt(std::string str) {
+  int ret = 0;
+  bool isNegative = false;
+  size_t i = 0;
+
+  if (str[i] == '+' || str[i] == '-') {
+    isNegative = (str[i] == '-');
+    i++;
+  }
+
+  for (; str[i]; i++) {
+    if ('0' <= str[i] && str[i] <= '9') {
+      ret *= 10;
+      ret += str[i] - '0';
+    } else {
+      break;
+    }
+  }
+  return ret * (isNegative ? -1 : 1);
+}
+#define GET_VARIABLE_NAME(n) #n
+
+typedef struct {
+  std::string hello;
+
+} aa;
+
+std::string ttrim(std::string str, char c) {
+  size_t pos = str.find(c);
+  return pos == std::string::npos ? str : str.substr(0, pos);
+}
+
 int main(void) {
-  string a = "hello world!";
-  StringReader sr(a);
 
-  // while (sr.tellg() > -1)
-      cout << (char)sr.get() << endl;
-  sr.seekg(2, std::ios_base::beg);
-  cout << (char)sr.get() << endl;
-
-  cout << sr.tellg() << endl;
-
+  std::cout << ttrim("#hello", 'h') << std::endl;
+  
+  // cout << stringToInt("-2147483648") << endl;
   // fstream file;
 
   // file.open("test", ios::trunc | ios::out);

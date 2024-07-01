@@ -35,19 +35,23 @@ void ConfigManager::parseConfig(std::string path) {
   size_t textLen = aspireText.length();
 
   while (sr.tellg() > -1) {
-    std::string line = sr.readline();
+    std::string originalLine = sr.readline();
+    std::string line = originalLine;
+    size_t len = line.length();
 
     line = trimComment(line);
-    LineCount++;
+    line = trim(line);
     if (line.empty() || line.length() == 0)
       continue;
-    
-    size_t pos = line.find(aspireText);
+
+    size_t pos = originalLine.find(aspireText);
     if (pos != std::string::npos) {
-      int prevPos = (int)sr.tellg() - (line.length() + 1);
+      int prevPos = (int)sr.tellg() - (len + 1);
       sr.seekg(pos + textLen + prevPos);
       sr.seekg(findStartBlockPos(sr) + 1);
       ConfigManager::_servers.push_back(parseServer(sr));
+    } else {
+      ConfigSyntaxException("config is not started server");
     }
   }
 }
@@ -58,27 +62,27 @@ void ConfigManager::printConfig() {
     Server server = _servers[i];
     std::cout << "server {\n"; 
 
-    std::cout << "error_page " + server.get404Path() << ";" << std::endl;
-    std::cout << "css_path " + server.getCssPath() << ";" << std::endl;
-    std::cout << "js_path " + server.getJsPath() << ";" << std::endl;
-    std::cout << "img_path " + server.getImgPath() << ";" << std::endl;
-    std::cout << "host " + server.getAddr() << ";" << std::endl;
-    std::cout << "index " + server.getIdxPath() << ";" << std::endl;
-    std::cout << "client_body_size " << server.getBodySize() << ";" << std::endl;
-    std::cout << "root " + server.getRootPath() << ";" << std::endl;
-    std::cout << "server_name " + server.getName() << ";" << std::endl;
-    std::cout << "listen " << server.getPort() << ";" << std::endl;
+    std::cout << "    error_page " + server.get404Path() << ";" << std::endl;
+    std::cout << "    css_path " + server.getCssPath() << ";" << std::endl;
+    std::cout << "    js_path " + server.getJsPath() << ";" << std::endl;
+    std::cout << "    img_path " + server.getImgPath() << ";" << std::endl;
+    std::cout << "    host " + server.getAddr() << ";" << std::endl;
+    std::cout << "    index " + server.getIdxPath() << ";" << std::endl;
+    std::cout << "    client_body_size " << server.getBodySize() << ";" << std::endl;
+    std::cout << "    root " + server.getRootPath() << ";" << std::endl;
+    std::cout << "    server_name " + server.getName() << ";" << std::endl;
+    std::cout << "    listen " << server.getPort() << ";" << std::endl;
     std::vector<Location> locs = server.getLocations();
     for (size_t j = 0; j < locs.size(); j++) {
       Location loc = locs[j];
-      std::cout << "location " + loc.getUriPath() + " {" << ";" << std::endl;
-      std::cout << "index " + loc.getIdxPath() << ";" << std::endl;
-      std::cout << "autoindex " + (std::string)(loc.getIsAutoindex() ? "on" : "off") << ";" << std::endl;
-      std::cout << "cgi-path " + loc.getCgiPath() << ";" << std::endl;
-      std::cout << "return " + loc.getRedirectPath() << ";" << std::endl;
-      std::cout << "root " + loc.getRootPath() << ";" << std::endl;
+      std::cout << "    location " + loc.getUriPath() + " {" << ";" << std::endl;
+      std::cout << "        index " + loc.getIdxPath() << ";" << std::endl;
+      std::cout << "        autoindex " + (std::string)(loc.getIsAutoindex() ? "on" : "off") << ";" << std::endl;
+      std::cout << "        cgi-path " + loc.getCgiPath() << ";" << std::endl;
+      std::cout << "        return " + loc.getRedirectPath() << ";" << std::endl;
+      std::cout << "        root " + loc.getRootPath() << ";" << std::endl;
       int method = loc.getMethods();
-      std::cout << "allow_methods ";
+      std::cout << "        allow_methods ";
       if (method & (1 << GET))
         std::cout << "GET ";
       if (method & (1 << POST))
@@ -86,7 +90,7 @@ void ConfigManager::printConfig() {
       if (method & (1 << DELETE))
         std::cout << "DELETE ";
       std::cout << ";" << std::endl;
-      std::cout << "}\n";
+      std::cout << "    }\n";
     }
     std::cout << "}\n";
   }

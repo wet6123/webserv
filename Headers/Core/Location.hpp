@@ -16,6 +16,7 @@ public:
   ~Location();
 
   void setUriPath(std::string path);
+  void setData(LocationData data);
   int getMethods() const;
   bool getIsAutoindex() const;
   std::string getCgiPath() const;

@@ -11,6 +11,5 @@ void webserv::throwException(const std::string &message) {
 }
 
 void ConfigSyntaxException(std::string msg) {
-  msg += ", Line : " + itos(LineCount);
   FT_THROW(msg, "ConfigSyntaxException");
 }

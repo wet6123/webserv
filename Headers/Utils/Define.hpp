@@ -4,13 +4,18 @@
 #include <string>
 #include <map>
 #include <vector>
-extern int LineCount;
-
-typedef enum { NONE, GET, POST, DELETE } Methods;
 
 typedef std::vector<std::string> t_vecString;
 typedef std::map<std::string, t_vecString> Dict;
 typedef std::pair<std::string, t_vecString> DictElem;
+
+typedef enum {
+  NONE,
+  GET,
+  POST,
+  DELETE
+} Methods;
+
 
 typedef struct {
   int _port;

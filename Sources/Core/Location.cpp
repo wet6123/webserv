@@ -14,6 +14,7 @@ Location &Location::operator=(const Location &loc) {
 }
 Location::~Location() {}
 void Location::setUriPath(std::string path) { _locationData._uriPath = path; }
+void Location::setData(LocationData data) { _locationData = data; }
 
 /* #region getter */
 int Location::getMethods() const { return _locationData._allowMethod; }

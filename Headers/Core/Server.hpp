@@ -18,6 +18,7 @@ public:
   ~Server();
 
   void pushBackLocation(Location loc);
+  void setData(ServerData data);
   /* #region getter */
   Location getLocation(std::string uri) const;
   std::vector<Location> getLocations() const;
@@ -32,6 +33,8 @@ public:
   std::string getCssPath() const;
   std::string getRootPath() const;
   /* #endregion */
+
+
 };
 Server parseServer(StringReader &sr);
 #endif

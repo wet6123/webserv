@@ -14,7 +14,8 @@ bool existFile(std::string path);
 bool existDir(std::string path);
 std::string trim(std::string s);
 std::string trimComment(std::string s);
-bool stringStartWith(std::string str, std::string find);
+
+bool stringStartWith(std::string str, std::string find, bool mustTrim);
 std::string strjoin(std::string s1, std::string s2);
 std::string strjoin(std::string s1, std::string s2, std::string s3);
 std::string strjoin(std::string s1, std::string s2, std::string s3,
