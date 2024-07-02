@@ -73,7 +73,27 @@ void recursiveLocationParsing(StringReader &sr, Dict &dict, Location &ret) {
   recursiveLocationParsing(sr, dict, ret);
 }
 
+std::string extractUriPath(StringReader &sr) {
+  size_t pos = sr.tellg();
+  std::string ret = "";
+
+  while (sr.tellg() > 0 && sr[pos] == ' ') {
+    pos++;
+  }
+
+  while (sr.tellg() > 0 && sr[pos] != ' ') {
+    if (sr[pos] == '}')
+      break;
+    ret += sr[pos];
+    pos++;
+  }
+  sr.seekg(pos);
+  sr.seekg(findStartBlockPos(sr) + 1);
+  return ret;
+}
+
 Location parseLocation(StringReader &sr) {
+  std::string uri = extractUriPath(sr);
   size_t endPos = findEndBlockPos(sr);
   size_t startPos = sr.tellg();
   std::string locationText = sr.subStr(startPos, endPos - startPos);
@@ -84,6 +104,7 @@ Location parseLocation(StringReader &sr) {
   recursiveLocationParsing(locationSr, dict, ret);
 
   LocationData data = makeLocationData(dict);
+  data._uriPath = uri;
   ret.setData(data);
 
   sr.seekg(endPos + 1);

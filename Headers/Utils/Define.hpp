@@ -40,6 +40,7 @@ typedef struct {
   std::string _idxPath;
   std::string _rootPath;
   std::string _redirectPath;
+  std::string _autoindexPath;
 } LocationData;
 
 #endif

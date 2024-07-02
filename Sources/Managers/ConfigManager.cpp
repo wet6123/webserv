@@ -2,7 +2,7 @@
 #include "../../Headers/Utils/StringReader.hpp"
 #include <vector>
 
-std::vector<Server> ConfigManager::_servers;
+
 
 ConfigManager::ConfigManager() {}
 ConfigManager::~ConfigManager() {}
@@ -72,7 +72,7 @@ void ConfigManager::printConfig() {
     std::cout << "    root " + server.getRootPath() << ";" << std::endl;
     std::cout << "    server_name " + server.getName() << ";" << std::endl;
     std::cout << "    listen " << server.getPort() << ";" << std::endl;
-    std::vector<Location> locs = server.getLocations();
+    std::vector<Location> &locs = server.getLocations();
     for (size_t j = 0; j < locs.size(); j++) {
       Location loc = locs[j];
       std::cout << "    location " + loc.getUriPath() + " {" << ";" << std::endl;

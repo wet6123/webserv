@@ -15,8 +15,16 @@ public:
   Location &operator=(const Location &loc);
   ~Location();
 
-  void setUriPath(std::string path);
+  void setMethods(int n);
+  void setIsAutoindex(bool f);
   void setData(LocationData data);
+  void setUriPath(std::string path);
+  void setIdxPath(std::string path);
+  void setCgiPath(std::string path);
+  void setRootPath(std::string path);
+  void setRedirectPath(std::string path);
+  void setAutoindxPath(std::string path);
+
   int getMethods() const;
   bool getIsAutoindex() const;
   std::string getCgiPath() const;
@@ -24,6 +32,7 @@ public:
   std::string getIdxPath() const;
   std::string getRootPath() const;
   std::string getRedirectPath() const;
+  std::string setAutoindxPath() const;
 };
 
 Location parseLocation(StringReader &sr);

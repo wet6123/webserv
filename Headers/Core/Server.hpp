@@ -21,7 +21,7 @@ public:
   void setData(ServerData data);
   /* #region getter */
   Location getLocation(std::string uri) const;
-  std::vector<Location> getLocations() const;
+  std::vector<Location> &getLocations();
   int getPort() const;
   int getBodySize() const;
   std::string getName() const;

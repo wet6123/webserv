@@ -36,7 +36,7 @@ Location Server::getLocation(std::string uri) const {
   return ret;
 }
 
-std::vector<Location> Server::getLocations() const { return _locations; }
+std::vector<Location> &Server::getLocations() { return _locations; }
 /* #endregion */
 void Server::pushBackLocation(Location loc) { _locations.push_back(loc);}
 void Server::setData(ServerData data) { _servData = data; }

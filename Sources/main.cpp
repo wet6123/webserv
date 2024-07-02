@@ -4,6 +4,8 @@
 
 int LineCount = 0;
 
+ConfigManager Managers::Config;
+
 int main(int ac, char *av[]) {
   std::string path = DEFAULT_CONF_PATH;
   if (ac == 2) {

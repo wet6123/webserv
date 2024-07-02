@@ -1,5 +1,8 @@
 #include "../../../Headers/Core/Server.hpp"
 #include "../../../Headers/Utils/Utils.hpp"
+#include <vector>
+
+typedef std::vector<Location> t_vecLocation;
 
 ServerData makeServerData(Dict dict) {
   ServerData data;
@@ -72,34 +75,36 @@ void recursiveServerParsing(StringReader &sr, Dict &dict, Server &ret) {
         size_t pos = originalLine.find(aspireText);
         int prevPos = (int)sr.tellg() - (len + 1);
         sr.seekg(pos + prevPos + textLen);
-        int i = sr.tellg();
-        while (true) {
-          if (sr[i] == ' ')
-            i++;
-          else
-            break;
-        }
-        while (true) {
-          if (sr[i] != ' ')
-            i++;
-          else
-            break;
-        }
-        sr.seekg(i);
-        sr.seekg(findStartBlockPos(sr) + 1);
         Location loc = parseLocation(sr);
-
-        // std::string _uriPath;
-        // std::string _idxPath;
-        // std::string _rootPath;
-        // int _allowMethod;
-        // loc.setUriPath(it->second[0]);
         ret.pushBackLocation(loc);
       }
     }
   }
   recursiveServerParsing(sr, dict, ret);
 }
+
+void updateLocations(t_vecLocation &locations, Server serv) {
+  for (size_t i = 0; i < locations.size(); i++) {
+    Location &loc = locations[i];
+
+    if (loc.getMethods() == 0) {
+      int t = 1 << GET;
+      t |= 1 << POST;
+      t |= 1 << DELETE;
+      loc.setMethods(t);
+    }
+    if (loc.getIdxPath().length() == 0) {
+      loc.setIdxPath(serv.getIdxPath());
+    }
+    if (loc.getRootPath().length() == 0) {
+      loc.setRootPath(serv.getRootPath());
+    }
+
+    loc.setAutoindxPath(loc.getRootPath() + loc.getUriPath());
+  }
+}
+
+// location uri, server root, index, listen, bodysize, host, errorpage
 
 Server parseServer(StringReader &sr) {
   size_t endPos = findEndBlockPos(sr);
@@ -117,6 +122,9 @@ Server parseServer(StringReader &sr) {
 
   // set server into dict
 
+  t_vecLocation &locations = ret.getLocations();
+  updateLocations(locations, ret);
+  
   sr.seekg(endPos + 1);
   return ret;
 }
