@@ -1,8 +1,6 @@
 #include "../../Headers/Socket.hpp"
 
-Socket::Socket(const std::string &host, const std::string &port) : _host(host.c_str()), _port(port.c_str()), _listenSocket(-1), _clientSocket(-1) {
-	_clientAddrSize = sizeof(_clientAddr);
-}
+Socket::Socket(const std::string &host, const std::string &port) : _host(host.c_str()), _port(port.c_str()), _listenSocket(-1)  {}
 
 Socket::~Socket() {
 	freeaddrinfo(_serverInfo);
@@ -23,10 +21,7 @@ Socket &Socket::operator=(const Socket &rhs) {
 		_host = rhs._host;
 		_port = rhs._port;
 		_listenSocket = dup(rhs._listenSocket);
-		_clientSocket = dup(rhs._clientSocket);
 		_serverInfo = rhs._serverInfo;
-		_clientAddr = rhs._clientAddr;
-		_clientAddrSize = rhs._clientAddrSize;
 	}
 	return *this;
 }
@@ -69,7 +64,8 @@ void	Socket::listen(int backlog) {
 }
 
 int		Socket::accept() {
-	_clientSocket = ::accept(_listenSocket, (struct sockaddr *)&_clientAddr, &_clientAddrSize);
+	struct sockaddr_storage _clientAddr;
+	int _clientSocket = ::accept(_listenSocket, NULL, NULL);
 
 	if (_clientSocket == -1) {
 		if (errno == EAGAIN || errno == EWOULDBLOCK) {
@@ -91,8 +87,8 @@ void	Socket::close() {
 	}
 }
 
-int Socket::send(const char *buf, size_t len, int flags) {
-	int status = ::send(_clientSocket, buf, len, flags);
+int Socket::send(int clientSocket, const char *buf, size_t len, int flags) {
+	int status = ::send(clientSocket, buf, len, flags);
 	if (status == -1) {
 		std::cerr << "send: " << strerror(errno) << std::endl;
 		throw SocketException("send");
@@ -100,8 +96,8 @@ int Socket::send(const char *buf, size_t len, int flags) {
 	return status;
 }
 
-int Socket::recv(char *buf, size_t len, int flags) {
-	int status = ::recv(_clientSocket, buf, len, flags);
+int Socket::recv(int clientSocket, char *buf, size_t len, int flags) {
+	int status = ::recv(clientSocket, buf, len, flags);
 	if (status == -1) {
 		if (errno == EWOULDBLOCK || errno == EAGAIN) {
 			return status;
@@ -138,10 +134,6 @@ int Socket::getListenSocket() const {
 	return _listenSocket;
 }
 
-int Socket::getClientSocket() const {
-	return _clientSocket;
-}
-
 const char *Socket::getHost() const {
 	return _host;
 }
@@ -157,14 +149,6 @@ std::string Socket::getServerIP() const {
 	return std::string(ip);
 
 }
-
-std::string Socket::getClientIP() const {
-
-	char ip[INET_ADDRSTRLEN];
-	inet_ntop(AF_INET, &((struct sockaddr_in *)&_clientAddr)->sin_addr, ip, INET_ADDRSTRLEN);
-	return std::string(ip);
-}
-
 
 void	Socket::setAutoSockopt() {
 	int opt = 1;

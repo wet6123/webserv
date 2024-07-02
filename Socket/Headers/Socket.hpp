@@ -8,6 +8,8 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <fcntl.h>
+#include <vector>
+#include <map>
 
 
 class Socket {
@@ -26,21 +28,19 @@ public:
 	void	listen(int backlog);
 	int		accept();
 	void	close();
-	int		send(const char *buf, size_t len, int flags);
-	int		recv(char *buf, size_t len, int flags);
+	int		send(int clientSocket, const char *buf, size_t len, int flags);
+	int		recv(int clientSocket, char *buf, size_t len, int flags);
 
 	void setsockopt(int level, int optname, int opt);
-	void setAddrInfo(int family, int socktype, int protocol, int flags);
 	void setAutoSockopt();
 	void setNonBlocking(int socket);
 	void autoActiveSock();
 
 	int getListenSocket() const;
-	int getClientSocket() const;
 	const char *getHost() const;
 	const char *getPort() const;
 	std::string getServerIP() const;
-	std::string getClientIP() const;
+	std::string getClientIP(int clientSocket) const;
 
 	class SocketException : public std::exception {
 	public:
@@ -57,8 +57,5 @@ private:
 	const char *_host;
 	const char *_port;
 	int _listenSocket;
-	int _clientSocket;
 	struct addrinfo *_serverInfo;
-	struct sockaddr_storage _clientAddr;
-	socklen_t _clientAddrSize;
 };
