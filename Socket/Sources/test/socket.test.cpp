@@ -25,11 +25,11 @@ int main() {
             }
             
             std::cout << "클라이언트 연결됨" << std::endl;
-            std::cout << "클라이언트 IP: " << server.getClientIP() << std::endl;
+            // std::cout << "클라이언트 IP: " << server.getClientIP() << std::endl;
             
             while (1) {
                 memset(buf, 0, sizeof(buf));
-                int recv_len = server.recv(buf, sizeof(buf), 0);
+                int recv_len = server.recv(clientSocket, buf, sizeof(buf), 0);
                 if (recv_len == -1) {
                     if (errno == EWOULDBLOCK || errno == EAGAIN) {
                         usleep(10000);

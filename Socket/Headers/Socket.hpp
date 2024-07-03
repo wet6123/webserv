@@ -31,7 +31,7 @@ public:
 	int		send(int clientSocket, const char *buf, size_t len, int flags);
 	int		recv(int clientSocket, char *buf, size_t len, int flags);
 
-	void setsockopt(int level, int optname, int opt);
+	void setSockopt(int level, int optname, int opt);
 	void setAutoSockopt();
 	void setNonBlocking(int socket);
 	void autoActiveSock();
@@ -40,7 +40,6 @@ public:
 	const char *getHost() const;
 	const char *getPort() const;
 	std::string getServerIP() const;
-	std::string getClientIP(int clientSocket) const;
 
 	class SocketException : public std::exception {
 	public:
@@ -57,5 +56,5 @@ private:
 	const char *_host;
 	const char *_port;
 	int _listenSocket;
-	struct addrinfo *_serverInfo;
+	std::string _serverIP;
 };

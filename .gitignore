@@ -1,37 +1,33 @@
-# Ignore editor and IDE files
+# 에디터 및 IDE 파일 무시
 .vscode/
 .idea/
 *.test
 
-# Ignore dependencies
-node_modules/
-vendor/
+# 의존성 파일 무시
 a.out
-# Ignore build artifacts
-dist/
+
+# 빌드 결과물 무시
 build/
 
-# Ignore logs and temporary files
+# 로그 및 임시 파일 무시
 logs/
 tmp/
 
-# Ignore environment-specific files
+# 환경 관련 파일 무시
 .env
 .env.local
 .env.*.local
 
-# Ignore sensitive or private files
+# 민감한 정보나 개인 파일 무시
 secrets/
 
-# Ignore compiled code
+# 컴파일된 코드 무시
 *.class
 *.jar
 *.war
 
-# Ignore package lock files
-package-lock.json
-yarn.lock
+# 패키지 잠금 파일 무시
 
-# Ignore backup files
+# 백업 파일 무시
 *~
 *.bak
