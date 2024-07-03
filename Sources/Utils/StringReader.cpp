@@ -1,31 +1,23 @@
 #include "../../Headers/Utils/StringReader.hpp"
 #include <istream>
 
-StringReader::StringReader(std::string str)
-    : std::istream(&buf), buf(str) {
-  _str = str;
-}
-
-StringReader::~StringReader() {}
-std::string StringReader::subStr(int start) const { return _str.substr(start); }
-std::string StringReader::subStr(int start, int count) const { return _str.substr(start, count); }
+StringReader::StringReader(const std::string &content)
+    : iss(content), _str(content) {}
 
 std::string StringReader::readline() {
   std::string line;
+  std::getline(iss, line);
 
-  int start = tellg();
-  if (start == -1)
-    return "";
-
-  size_t pos = _str.find('\n', start);
-  if (pos != std::string::npos) {
-    line = _str.substr(start, pos - start);
-    seekg(pos + 1);
-  } else {
-    seekg(-1);
-    line = _str.substr(start);
-  }
   return line;
 }
 
-char StringReader::operator[](int i) const { return _str[i]; }
+std::string StringReader::subStr(size_t start,
+                                 size_t count = std::string::npos) const {
+  return _str.substr(start, count);
+}
+
+void StringReader::seekg(size_t pos) { iss.seekg(pos); }
+
+int StringReader::tellg() { return iss.tellg(); }
+
+char StringReader::operator[](size_t pos) const { return _str[pos]; }
