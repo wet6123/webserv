@@ -1,6 +1,5 @@
 #include "../../Headers/Utils/StringReader.hpp"
 #include <istream>
-#include <iostream>
 
 StringReader::StringReader(std::string str)
     : std::istream(&buf), buf(str) {
@@ -9,25 +8,17 @@ StringReader::StringReader(std::string str)
 
 StringReader::~StringReader() {}
 std::string StringReader::subStr(int start) const { return _str.substr(start); }
-std::string StringReader::subStr(int start, int count) const {
-  return _str.substr(start, count);
-}
+std::string StringReader::subStr(int start, int count) const { return _str.substr(start, count); }
+
 std::string StringReader::readline() {
   std::string line;
-  int pos = tellg();
-  int len = _str.length();
-
-  if (pos == -1)
-    return "";
-  while (pos < len) {
-    if (_str[pos] == '\n')
-      break;
-    pos++;
-  }
 
   int start = tellg();
+  if (start == -1)
+    return "";
 
-  if (_str[pos] == '\n') {
+  size_t pos = _str.find('\n', start);
+  if (pos != std::string::npos) {
     line = _str.substr(start, pos - start);
     seekg(pos + 1);
   } else {
