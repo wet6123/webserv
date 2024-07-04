@@ -2,6 +2,7 @@
 
 import cgi
 import os
+import sys
 
 def upload_file():
     # FieldStorage instance
@@ -30,5 +31,8 @@ def upload_file():
             print(f"<html><body><h2>File {filename} uploaded successfully.</h2></body></html>")
         except Exception as e:
             print(f"<html><body><h2>Error uploading file: {e}</h2></body></html>")
+            sys.exit(1)
     else:
         print("<html><body><h2>No file was uploaded.</h2></body></html>")
+        sys.exit(1)
+    sys.exit(0)
