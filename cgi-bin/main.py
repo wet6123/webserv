@@ -19,7 +19,9 @@ def get_env():
 
 def main():
 	# Set the content type
-	print("Content-Type: text/html\n")
+	print("HTTP/1.1 200 OK")
+	print("Content-Type: text/html")
+	print()
 
 	request_method, query_string, content_type, content_length = get_env()
 
