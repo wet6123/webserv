@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import cgi
+from http import HTTPStatus
 import os
 import sys
 
@@ -28,11 +29,14 @@ def upload_file():
                 f.write(file_item.file.read())
 
             # HTML response for successful upload
-            print(f"<html><body><h2>File {filename} uploaded successfully.</h2></body></html>")
+            response_body = f"<html><body><h2>File {filename} uploaded successfully.</h2></body></html>"
+            status_code = HTTPStatus.OK
         except Exception as e:
-            print(f"<html><body><h2>Error uploading file: {e}</h2></body></html>")
-            sys.exit(1)
+            response_body = f"<html><body><h2>Error uploading file: {e}</h2></body></html>"
+            # Internal server error status code
+            status_code = HTTPStatus.INTERNAL_SERVER_ERROR
     else:
-        print("<html><body><h2>No file was uploaded.</h2></body></html>")
-        sys.exit(1)
-    sys.exit(0)
+        response_body = "<html><body><h2>No file was uploaded.</h2></body></html>"
+        # Bad request status code
+        status_code = HTTPStatus.BAD_REQUEST
+    return response_body, status_code
