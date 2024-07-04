@@ -1,0 +1,43 @@
+# 에디터 및 IDE 파일 무시
+.vscode/
+.idea/
+*.test
+
+# 의존성 파일 무시
+a.out
+
+# 빌드 결과물 무시
+build/
+
+# 로그 및 임시 파일 무시
+logs/
+tmp/
+
+# 환경 관련 파일 무시
+.env
+.env.local
+.env.*.local
+
+# 민감한 정보나 개인 파일 무시
+secrets/
+
+# 컴파일된 코드 무시
+*.class
+*.jar
+*.war
+
+# 오브젝트 파일 무시
+*.o
+
+# 바이너리 파일 무시
+*.bin
+*.exe
+*.out
+
+# OS 생성 파일 무시
+.DS_Store?
+.DS_Store
+
+# 백업 파일 무시
+*~
+*.bak
