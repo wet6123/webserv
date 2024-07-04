@@ -18,8 +18,6 @@ public:
 	Socket(const std::string &host, const std::string &port);
 	~Socket();
 
-	operator int() const;
-	operator bool() const;
 	Socket &operator=(const Socket &rhs);
 
 

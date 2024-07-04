@@ -7,14 +7,6 @@ Socket::~Socket() {
 		this->close();
 }
 
-Socket::operator int() const {
-	return _listenSocket;
-}
-
-Socket::operator bool() const {
-	return _listenSocket != -1;
-}
-
 Socket &Socket::operator=(const Socket &rhs) {
 	if (this != &rhs) {
 		_host = rhs._host;
@@ -216,7 +208,7 @@ void    Socket::setAutoSockopt() {
 void    Socket::autoActiveSock() {
 	this->socket();
 	std::cout << "Socket created" << std::endl;
-	this->setNonBlocking(_listenSocket);
+	// this->setNonBlocking(_listenSocket);
 	std::cout << "Socket set to non-blocking" << std::endl;
 	this->setAutoSockopt();
 	std::cout << "Socket options set" << std::endl;

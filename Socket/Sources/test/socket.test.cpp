@@ -13,6 +13,7 @@ int main() {
         
         while (1) {
             int clientSocket = server.accept();
+			std::cout << "클라이언트 연결 대기중..." << std::endl;
             if (clientSocket == -1) {
                 if (errno == EWOULDBLOCK || errno == EAGAIN) {
                     continue;
