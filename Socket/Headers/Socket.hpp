@@ -29,7 +29,7 @@ public:
 	int		send(int clientSocket, const char *buf, size_t len, int flags);
 	int		recv(int clientSocket, char *buf, size_t len, int flags);
 
-	void setSockopt(int level, int optname, int opt);
+	void setSockOpt(int level, int optname, int opt);
 	void setAutoSockopt();
 	void setNonBlocking(int socket);
 	void autoActiveSock();
@@ -38,6 +38,7 @@ public:
 	const char *getHost() const;
 	const char *getPort() const;
 	std::string getServerIP() const;
+	void logError(const std::string &msg) const;
 
 	class SocketException : public std::exception {
 	public:
@@ -49,8 +50,10 @@ public:
 	};
 	
 private:
-	Socket();
+	static const int _defalutBacklog = 10;
+	static const int _defaultBufferSize = 1024;
 	Socket(const Socket &rhs);
+	Socket();
 	const char *_host;
 	const char *_port;
 	int _listenSocket;

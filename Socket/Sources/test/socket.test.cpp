@@ -59,7 +59,7 @@ int main() {
         std::cerr << "SocketException: " << e.what() << std::endl;
         return 1;
     } catch (const std::exception& e) {
-        std::cerr << "Exception: " << e.what() << std::endl;
+        std::cerr << "Exceptio	n: " << e.what() << std::endl;
         return 1;
     }
     return 0;
