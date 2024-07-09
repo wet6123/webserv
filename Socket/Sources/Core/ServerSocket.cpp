@@ -179,7 +179,7 @@ void ServerSocket::setAutoSockopt() {
  * 소켓을 자동으로 설정하고 활성화하는 함수
  * @return void
  */
-void ServerSocket::makeServerSocket() {
+void ServerSocket::initServerSocket() {
     socket();
     std::cout << "Socket created" << std::endl;
     setNonBlocking(_serverSocket);
