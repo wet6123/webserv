@@ -11,34 +11,26 @@
 #include <vector>
 #include <map>
 
-
-class Socket {
+class ServerSocket {
 
 public:
-	Socket(const std::string &host, const std::string &port);
-	~Socket();
+	ServerSocket(const std::string &host, const std::string &port);
+	~ServerSocket();
+	ServerSocket &operator=(const ServerSocket &rhs);
 
-	Socket &operator=(const Socket &rhs);
-
-
-	void	socket();
-	void	bind();
-	void	listen(int backlog);
 	int		accept();
-	void	close();
-	int		send(int clientSocket, const char *buf, size_t len, int flags);
-	int		recv(int clientSocket, char *buf, size_t len, int flags);
 
 	void setSockOpt(int level, int optname, int opt);
 	void setAutoSockopt();
 	void setNonBlocking(int socket);
-	void autoActiveSock();
+	void makeServerSocket();
 
-	int getListenSocket() const;
+	void logError(const std::string &msg) const;
+
+	int getServerSocket() const;
 	const char *getHost() const;
 	const char *getPort() const;
 	std::string getServerIP() const;
-	void logError(const std::string &msg) const;
 
 	class SocketException : public std::exception {
 	public:
@@ -50,12 +42,19 @@ public:
 	};
 	
 private:
-	static const int _defalutBacklog = 10;
-	static const int _defaultBufferSize = 1024;
-	Socket(const Socket &rhs);
-	Socket();
+	#define DEFAULTBACKLOG 10
+	#define DEFAULTBUFFER 1024
+
+	void	socket();
+	void	bind();
+	void	listen(int backlog);
+	void	close();
+
+	ServerSocket();
+	ServerSocket(const ServerSocket &rhs);
+	
 	const char *_host;
 	const char *_port;
-	int _listenSocket;
+	int _serverSocket;
 	std::string _serverIP;
 };
