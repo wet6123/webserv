@@ -1,6 +1,3 @@
-#ifndef STRING_UTILS_HPP
-#define STRING_UTILS_HPP
-
 #include "../../include/utils/string_utils.hpp"
 
 /**
@@ -24,5 +21,3 @@ namespace STRING_UTILS {
 
 
 
-
-#endif
