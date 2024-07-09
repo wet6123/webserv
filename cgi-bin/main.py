@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from html import escape
 import os
 import cgi
 import cgitb
@@ -40,10 +41,10 @@ def main():
         else:
             content_length = int(content_length)
             post_data = sys.stdin.read(content_length)
-            response_body = "<html><body><h1>POST Data</h1><pre>{}</pre></body></html>".format(cgi.escape(post_data))
+            response_body = "<html><body><h1>POST Data</h1><pre>{}</pre></body></html>".format(escape(post_data))
             status_code = HTTPStatus.OK
     else:
-        response_body = "<html><body><h1>Hello, CGI!</h1><p>{}</p></body></html>".format(cgi.escape(query_string))
+        response_body = "<html><body><h1>Hello, CGI!</h1><p>{}</p></body></html>".format(escape(query_string))
         status_code = HTTPStatus.OK
 
     print_response(response_body, status_code)
