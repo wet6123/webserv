@@ -4,7 +4,7 @@
 #include <netdb.h>
 #include <unistd.h>
 #include <arpa/inet.h>
-#include "../../Headers/Socket.hpp"
+#include "../../Headers/ServerSocket.hpp"
 
 
 int main()

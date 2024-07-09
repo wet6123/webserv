@@ -2,12 +2,12 @@
 #include <cstring>
 #include <errno.h>
 #include <fcntl.h>
-#include "../../Headers/Socket.hpp"
+#include "../../Headers/ServerSocket.hpp"
 
 int main() {
     try {
-        Socket server("localhost", "8080");
-        server.autoActiveSock();
+        ServerSocket server("localhost", "8080");
+        server.makeServerSocket();
         char buf[1024];
         std::cout << "서버 " << server.getServerIP() << ":" << server.getPort() << "에서 대기중..." << std::endl;
         
@@ -26,11 +26,10 @@ int main() {
             }
             
             std::cout << "클라이언트 연결됨" << std::endl;
-            // std::cout << "클라이언트 IP: " << server.getClientIP() << std::endl;
             
             while (1) {
                 memset(buf, 0, sizeof(buf));
-                int recv_len = server.recv(clientSocket, buf, sizeof(buf), 0);
+                int recv_len = recv(clientSocket, buf, sizeof(buf), 0);
                 if (recv_len == -1) {
                     if (errno == EWOULDBLOCK || errno == EAGAIN) {
                         usleep(10000);
@@ -55,7 +54,7 @@ int main() {
             
             close(clientSocket);
         }
-    } catch (const Socket::SocketException& e) {
+    } catch (const ServerSocket::SocketException& e) {
         std::cerr << "SocketException: " << e.what() << std::endl;
         return 1;
     } catch (const std::exception& e) {
