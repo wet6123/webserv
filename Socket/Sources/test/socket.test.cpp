@@ -7,7 +7,7 @@
 int main() {
     try {
         ServerSocket server("localhost", "8080");
-        server.makeServerSocket();
+        server.initServerSocket();
         char buf[1024];
         std::cout << "서버 " << server.getServerIP() << ":" << server.getPort() << "에서 대기중..." << std::endl;
         
