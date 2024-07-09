@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SERVERSOCKET_HPP
+#define SERVERSOCKET_HPP
 
 #include <netdb.h>
 #include <sys/socket.h>
@@ -23,7 +24,7 @@ public:
 	void setSockOpt(int level, int optname, int opt);
 	void setAutoSockopt();
 	void setNonBlocking(int socket);
-	void makeServerSocket();
+	void initServerSocket();
 
 	void logError(const std::string &msg) const;
 
@@ -42,9 +43,9 @@ public:
 	};
 	
 private:
-	#define DEFAULTBACKLOG 10
-	#define DEFAULTBUFFER 1024
-
+	static const int DEFAULTBACKLOG = 10;
+	static const int DEFAULTBUFFER = 1024;
+	
 	void	socket();
 	void	bind();
 	void	listen(int backlog);
@@ -58,3 +59,5 @@ private:
 	int _serverSocket;
 	std::string _serverIP;
 };
+
+#endif
