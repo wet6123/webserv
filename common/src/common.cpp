@@ -1,13 +1,6 @@
 #include "../include/common.hpp"
 
-
-WEB_SERVER::ErrorHandling::ErrorHandling() : currentLogLevel(DEBUG) {}
-
-
-WEB_SERVER::ErrorHandling::ErrorHandling(const std::string &logFileName) : currentLogLevel(DEBUG)
-{
-	logFile.open(logFileName.c_str(), std::ios::out | std::ios::app);
-}
+WEB_SERVER::ErrorHandling::LogLevel WEB_SERVER::ErrorHandling::currentLogLevel = WEB_SERVER::ErrorHandling::DEBUG;
 /**
 * @brief 로그 파일에 로그를 기록합니다.
 * @param logMessage 로그 메시지
@@ -25,7 +18,7 @@ void WEB_SERVER::ErrorHandling::writeLog(const std::string &logMessage)
 * @param level 로그 레벨
 * @return 로그 레벨 문자열
 */
-const char * WEB_SERVER::ErrorHandling::getLogLevelString(LogLevel level) const
+const char * WEB_SERVER::ErrorHandling::getLogLevelString(LogLevel level)
 {
 	switch (level)
 	{
@@ -42,7 +35,7 @@ const char * WEB_SERVER::ErrorHandling::getLogLevelString(LogLevel level) const
 * @brief 현재 타임스탬프를 반환합니다.
 * @return 현재 타임스탬프
 */
-std::string WEB_SERVER::ErrorHandling::getCurrentTimestamp() const
+std::string WEB_SERVER::ErrorHandling::getCurrentTimestamp()
 {
 	time_t now = time(0);
 	char buffer[80];
@@ -115,3 +108,8 @@ void WEB_SERVER::ErrorHandling::fatal(const std::string &message, const char *fi
 	log(FATAL, message, file, line);
 }
 
+void WEB_SERVER::ErrorHandling::setLogFilePath(const std::string& logFilePath)
+{
+	logFile.close();
+	logFile.open(logFilePath, std::ios_base::app);
+}

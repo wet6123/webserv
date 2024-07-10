@@ -19,6 +19,13 @@
 #include "types/data_type.hpp"
 #include "utils/string_utils.hpp"
 
+
+#define LOG_DEBUG(message) WEB_SERVER::ErrorHandling::debug(message, __FILE__, __LINE__)
+#define LOG_INFO(message) WEB_SERVER::ErrorHandling::info(message, __FILE__, __LINE__)
+#define LOG_WARNING(message) WEB_SERVER::ErrorHandling::warning(message, __FILE__, __LINE__)
+#define LOG_ERROR(message) WEB_SERVER::ErrorHandling::error(message, __FILE__, __LINE__)
+#define LOG_FATAL(message) WEB_SERVER::ErrorHandling::fatal(message, __FILE__, __LINE__)
+
 namespace WEB_SERVER {
 	namespace STRING_UTILS = ::STRING_UTILS;
 	namespace Type = ::Type;
@@ -38,46 +45,36 @@ namespace WEB_SERVER {
             FATAL
         };
 
-    protected:
-        LogLevel currentLogLevel;
-		std::ofstream logFile;
+    private:
+        static LogLevel currentLogLevel;
+		static std::ofstream logFile;
 		
 
-        virtual const char* getLogLevelString(LogLevel level) const;
+        static const char* getLogLevelString(LogLevel level);
 
-        virtual std::string getCurrentTimestamp() const;
+        static std::string getCurrentTimestamp();
 
-        virtual void writeLog(const std::string& logMessage);
+        static void writeLog(const std::string& logMessage);
 
     public:
-        ErrorHandling();
-		ErrorHandling(const std::string &logFileName);
-        virtual ~ErrorHandling() {}
 
-        void setLogLevel(LogLevel level);
+        static void setLogLevel(LogLevel level);
 
-        virtual void log(LogLevel level, const std::string &message, const char *file, int line);
+		static void setLogFilePath(const std::string& logFilePath);
 
-        void debug(const std::string &message, const char *file, int line) {
-            log(DEBUG, message, file, line);
-        }
+        static void log(LogLevel level, const std::string &message, const char *file, int line);
 
-        void info(const std::string &message, const char *file, int line) {
-            log(INFO, message, file, line);
-        }
+        static void debug(const std::string &message, const char *file, int line);
 
-        void warning(const std::string &message, const char *file, int line) {
-            log(WARNING, message, file, line);
-        }
+        static void info(const std::string &message, const char *file, int line);
 
-        void error(const std::string &message, const char *file, int line) {
-            log(ERROR, message, file, line);
-        }
+        static void warning(const std::string &message, const char *file, int line);
 
-        void fatal(const std::string &message, const char *file, int line) {
-            log(FATAL, message, file, line);
-        }
+        static void error(const std::string &message, const char *file, int line);
+
+        static void fatal(const std::string &message, const char *file, int line);
     };
+	
 }
 
 #endif
