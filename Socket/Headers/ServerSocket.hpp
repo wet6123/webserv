@@ -1,10 +1,10 @@
 #ifndef SERVERSOCKET_HPP
 #define SERVERSOCKET_HPP
 
+#include "../../common/include/common.hpp"
 #include <netdb.h>
 #include <sys/socket.h>
 #include <sys/types.h>
-#include <iostream>
 #include <stdexcept>
 #include <unistd.h>
 #include <arpa/inet.h>
@@ -18,7 +18,7 @@ public:
 	~ServerSocket();
 	ServerSocket &operator=(const ServerSocket &rhs);
 
-	int		accept();
+	WEB_SERVER::Type::FD	accept();
 
 	void setSockOpt(int level, int optname, int opt);
 	void setAutoSockOpt();
@@ -27,7 +27,7 @@ public:
 
 	void logError(const std::string &msg) const;
 
-	int getServerSocket() const;
+	WEB_SERVER::Type::FD getServerSocket() const;
 	const char *getHost() const;
 	const char *getPort() const;
 	std::string getServerIP() const;
