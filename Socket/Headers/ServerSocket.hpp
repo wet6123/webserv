@@ -22,7 +22,7 @@ public:
 	int		accept();
 
 	void setSockOpt(int level, int optname, int opt);
-	void setAutoSockopt();
+	void setAutoSockOpt();
 	void setNonBlocking(int socket);
 	void initServerSocket();
 

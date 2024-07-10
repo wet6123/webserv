@@ -169,7 +169,7 @@ std::string ServerSocket::getServerIP() const {
  * 자동으로 소켓 옵션을 설정하는 함수
  * @return void
  */
-void ServerSocket::setAutoSockopt() {
+void ServerSocket::setAutoSockOpt() {
     int opt = 1;
     setSockOpt(SOL_SOCKET, SO_REUSEADDR, opt);
     setSockOpt(SOL_SOCKET, SO_KEEPALIVE, opt);
@@ -184,7 +184,7 @@ void ServerSocket::initServerSocket() {
     std::cout << "Socket created" << std::endl;
     setNonBlocking(_serverSocket);
     std::cout << "Socket set to non-blocking" << std::endl;
-    setAutoSockopt();
+    setAutoSockOpt();
     std::cout << "Socket options set" << std::endl;
     bind();
     std::cout << "Socket bound" << std::endl;
