@@ -5,5 +5,4 @@
 
 #define GET_V_NAME(name) WEB_SERVER::UTILS::Split(#name, "::").back()
 
-
 #endif
