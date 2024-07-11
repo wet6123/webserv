@@ -14,18 +14,11 @@
 #include <list>
 
 #include "types/data_type.hpp"
-#include "utils/string_utils.hpp"
 
+#include "utils/errorhandle.hpp"
+#include "utils/split.hpp"
+#include "utils/utils.hpp"
 
-
-
-namespace WEB_SERVER {
-	namespace STRING_UTILS = ::STRING_UTILS;
-	namespace Type = ::Type;
-	namespace State = ::State;
-	namespace Method = ::Method;
-	namespace Status = ::Status;
-}
-
+namespace WS = WEB_SERVER;
 
 #endif

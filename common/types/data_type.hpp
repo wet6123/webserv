@@ -1,10 +1,9 @@
 #ifndef DATA_TYPE_HPP
 #define DATA_TYPE_HPP
-
 #include <iostream>
-#include "../utils/string_utils.hpp"
 
-	
+namespace  WEB_SERVER {
+
 namespace Type {
 	typedef int FD;
 	typedef std::string PORT;
@@ -109,5 +108,5 @@ namespace Status {
 	};
 }
 
-
+}
 #endif
