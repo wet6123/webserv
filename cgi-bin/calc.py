@@ -11,8 +11,8 @@ def main():
     form = cgi.FieldStorage()
     
     # Get values from the form
-    num1 = form.getvalue("num1")
-    num2 = form.getvalue("num2")
+    num1 = form.getvalue("num1") or 0
+    num2 = form.getvalue("num2") or 0
     operation = form.getvalue("operation")
     
     # Initialize result
