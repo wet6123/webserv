@@ -93,7 +93,7 @@ void ServerSocket::listen(int backlog) {
  * 클라이언트 연결 수락 함수
  * @return int: 클라이언트 소켓 식별자
  */
-int ServerSocket::accept() {
+WEB_SERVER::Type::FD ServerSocket::accept() {
     int clientSocket = ::accept(_serverSocket, NULL, NULL);
     if (clientSocket == -1) {
         if (errno == EAGAIN || errno == EWOULDBLOCK) {
@@ -150,7 +150,7 @@ void ServerSocket::setNonBlocking(int socket) {
     }
 }
 
-int ServerSocket::getServerSocket() const {
+WEB_SERVER::Type::FD ServerSocket::getServerSocket() const {
     return _serverSocket;
 }
 
