@@ -20,15 +20,7 @@ void WEB_SERVER::ErrorHandling::writeLog(const std::string &logMessage)
 */
 const char * WEB_SERVER::ErrorHandling::getLogLevelString(LogLevel level)
 {
-	switch (level)
-	{
-	case DEBUG: return "DEBUG";
-	case INFO: return "INFO";
-	case WARNING: return "WARNING";
-	case ERROR: return "ERROR";
-	case FATAL: return "FATAL";
-	default: return "UNKNOWN";
-	}
+	return GET_V_NAME(level).c_str();
 }
 
 /**
@@ -83,29 +75,29 @@ void WEB_SERVER::ErrorHandling::log(LogLevel level, const std::string &message, 
  * @return void
 */
 
-void WEB_SERVER::ErrorHandling::debug(const std::string &message, const char *file, int line)
+void WEB_SERVER::ErrorHandling::debug(const std::string &message, const char *fileName, int line)
 {
-	log(DEBUG, message, file, line);
+	log(DEBUG, message, fileName, line);
 }
 
-void WEB_SERVER::ErrorHandling::info(const std::string &message, const char *file, int line)
+void WEB_SERVER::ErrorHandling::info(const std::string &message, const char *fileName, int line)
 {
-	log(INFO, message, file, line);
+	log(INFO, message, fileName, line);
 }
 
-void WEB_SERVER::ErrorHandling::warning(const std::string &message, const char *file, int line)
+void WEB_SERVER::ErrorHandling::warning(const std::string &message, const char *fileName, int line)
 {
-	log(WARNING, message, file, line);
+	log(WARNING, message, fileName, line);
 }
 
-void WEB_SERVER::ErrorHandling::error(const std::string &message, const char *file, int line)
+void WEB_SERVER::ErrorHandling::error(const std::string &message, const char *fileName, int line)
 {
-	log(ERROR, message, file, line);
+	log(ERROR, message, fileName, line);
 }
 
-void WEB_SERVER::ErrorHandling::fatal(const std::string &message, const char *file, int line)
+void WEB_SERVER::ErrorHandling::fatal(const std::string &message, const char *fileName, int line)
 {
-	log(FATAL, message, file, line);
+	log(FATAL, message, fileName, line);
 }
 
 void WEB_SERVER::ErrorHandling::setLogFilePath(const std::string& logFilePath)
