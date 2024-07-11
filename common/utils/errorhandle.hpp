@@ -1,38 +1,20 @@
-#ifndef COMMON_HPP
-#define COMMON_HPP
+#ifndef ERRORHANDLE_HPP
+#define ERRORHANDLE_HPP
 
 #include <iostream>
-#include <vector>
-#include <string>
 #include <fstream>
 #include <sstream>
-#include <algorithm>
-#include <map>
-#include <set>
-#include <queue>
-#include <stack>
-#include <list>
+#include <string>
 #include <ctime>
 #include <iomanip>
 #include <cstdlib>
-
-#include "types/data_type.hpp"
-#include "utils/string_utils.hpp"
-
+#include <vector>
 
 #define LOG_DEBUG(message) WEB_SERVER::ErrorHandling::debug(message, __FILE__, __LINE__)
 #define LOG_INFO(message) WEB_SERVER::ErrorHandling::info(message, __FILE__, __LINE__)
 #define LOG_WARNING(message) WEB_SERVER::ErrorHandling::warning(message, __FILE__, __LINE__)
 #define LOG_ERROR(message) WEB_SERVER::ErrorHandling::error(message, __FILE__, __LINE__)
 #define LOG_FATAL(message) WEB_SERVER::ErrorHandling::fatal(message, __FILE__, __LINE__)
-
-namespace WEB_SERVER {
-	namespace STRING_UTILS = ::STRING_UTILS;
-	namespace Type = ::Type;
-	namespace State = ::State;
-	namespace Method = ::Method;
-	namespace Status = ::Status;
-}
 
 namespace WEB_SERVER {
     class ErrorHandling {

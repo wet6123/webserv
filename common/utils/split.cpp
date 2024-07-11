@@ -1,4 +1,4 @@
-#include "../../include/utils/string_utils.hpp"
+#include "split.hpp"
 
 /**
 * @brief 문자열을 특정 문자열을 기준으로 나누는 함수
@@ -6,7 +6,7 @@
 * @param const std::string &delim : 나눌 기준이 되는 문자열
 * @return std::vector<std::string> : 나눈 문자열을 저장한 벡터
 */
-namespace STRING_UTILS {
+namespace UTILS {
 	std::vector<std::string> Split(const std::string &str, const std::string &delim) {
 		std::istringstream iss(str);
 		std::string buffer;
@@ -18,6 +18,3 @@ namespace STRING_UTILS {
 		return result;
 	}
 }
-
-
-

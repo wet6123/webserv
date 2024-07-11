@@ -1,4 +1,5 @@
-#include "../include/common.hpp"
+#include "errorhandle.hpp"
+#include "utils.hpp"
 
 WEB_SERVER::ErrorHandling::LogLevel WEB_SERVER::ErrorHandling::currentLogLevel = WEB_SERVER::ErrorHandling::DEBUG;
 /**
