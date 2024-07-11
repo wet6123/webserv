@@ -103,5 +103,5 @@ void WEB_SERVER::ErrorHandling::fatal(const std::string &message, const char *fi
 void WEB_SERVER::ErrorHandling::setLogFilePath(const std::string& logFilePath)
 {
 	logFile.close();
-	logFile.open(logFilePath, std::ios_base::app);
+	logFile.open(logFilePath, std::ios_base::trunc);
 }
