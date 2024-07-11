@@ -53,7 +53,7 @@ def main():
         # Calculation result
         print(f"<p>Result: {result}</p>")
     
-    print('<a href="/calculator.html">Go back</a>')
+    print('<a href="/calc.html">Go back</a>')
     print("</body></html>")
 
 if __name__ == "__main__":
