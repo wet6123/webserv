@@ -1,5 +1,4 @@
-#include "../../Headers/Utils/StringReader.hpp"
-#include <istream>
+#include "StringReader.hpp"
 
 StringReader::StringReader(const std::string &content)
     : iss(content), _str(content) {}
