@@ -69,8 +69,10 @@ void ErrorLog::log(LogLevel level, const std::string &message, const char *file,
 	if (level < currentLogLevel) return;
 
 	std::ostringstream ss;
-	ss << "[" << getCurrentTimestamp() << "] "
+	ss	<< "[" << getCurrentTimestamp() << "] "
+		<< getColorCode(level)
 		<< "[" << getLogLevelString(level) << "] "
+		<< "\033[0m"
 		<< file << ":" << line << " - " << message << std::endl;
 
 	writeLog(ss.str());
@@ -110,4 +112,20 @@ void ErrorLog::setLogFilePath(const std::string& logFilePath)
 {
 	logFile.close();
 	logFile.open(logFilePath, std::ios_base::trunc);
+}
+/**
+ * @brief 로그 레벨에 따른 색상 코드를 반환합니다.
+ * @param level 로그 레벨
+ * @return 색상 코드 
+ * @note DEBUG: Cyan, INFO: Green, WARNING: Yellow, ERROR: Red, FATAL: Magenta
+*/
+const char* ErrorLog::getColorCode(LogLevel level) {
+	switch (level) {
+		case DEBUG: return "\033[36m";
+		case INFO: return "\033[32m";
+		case WARNING: return "\033[33m";
+		case ERROR: return "\033[31m";
+		case FATAL: return "\033[35m";
+		default: return "\033[0m";
+	}
 }
