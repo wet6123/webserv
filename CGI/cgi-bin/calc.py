@@ -3,7 +3,7 @@
 import cgi
 import cgitb
 from html import escape
-from html import HTTPStatus
+from http import HTTPStatus
 
 # Enable debugging
 cgitb.enable()
@@ -38,13 +38,16 @@ def calculator():
             elif operation == "divide":
                 if num2 != 0:
                     result = num1 / num2
-                # TODO: Handle status code when error occurs
+                # FIXME: Handle status code when error occurs
                 else:
                     result = "Error: Division by zero"
+                    status_code = HTTPStatus.BAD_REQUEST
             else:
                 result = "Error: Invalid operation"
+                status_code = HTTPStatus.BAD_REQUEST
         except ValueError:
             result = "Error: Invalid input. Please enter numeric values."
+            status_code = HTTPStatus.BAD_REQUEST
     
     # Create the HTML response
     response_body = f"<html><body><h1>Calculator Result</h1><p>{escape(result)}</p></body></html>"
