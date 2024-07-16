@@ -1,5 +1,7 @@
 #include "../ErrorLog.hpp"
-#include "../String.hpp"
+
+ErrorLog::LogLevel ErrorLog::currentLogLevel = ErrorLog::DEBUG;
+std::ofstream ErrorLog::logFile;
 
 /**
 * @brief 로그 파일에 로그를 기록합니다.
@@ -8,9 +10,9 @@
 */
 void ErrorLog::writeLog(const std::string &logMessage)
 {
-	std::cout << logMessage << std::endl;
+	std::cout << logMessage;
 	if (logFile.is_open()) {
-		logFile << logMessage.c_str() << std::endl;
+		logFile << logMessage.c_str();
 	}
 }
 /**
@@ -20,7 +22,20 @@ void ErrorLog::writeLog(const std::string &logMessage)
 */
 const char * ErrorLog::getLogLevelString(LogLevel level)
 {
-	return GET_V_NAME(level).c_str();
+	switch (level) {
+	case DEBUG:
+		return "DEBUG";
+	case INFO:
+		return "INFO";
+	case WARNING:
+		return "WARNING";
+	case ERROR:
+		return "ERROR";
+	case FATAL:
+		return "FATAL";
+	default:
+		return "UNKNOWN";
+	}
 }
 /**
 * @brief 현재 타임스탬프를 반환합니다.
