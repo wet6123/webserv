@@ -1,5 +1,7 @@
 #include "../ErrorLog.hpp"
-#include "../String.hpp"
+
+ErrorLog::LogLevel ErrorLog::currentLogLevel = ErrorLog::DEBUG;
+std::ofstream ErrorLog::logFile;
 
 /**
 * @brief 로그 파일에 로그를 기록합니다.
@@ -8,9 +10,9 @@
 */
 void ErrorLog::writeLog(const std::string &logMessage)
 {
-	std::cout << logMessage << std::endl;
+	std::cout << logMessage;
 	if (logFile.is_open()) {
-		logFile << logMessage.c_str() << std::endl;
+		logFile << logMessage.c_str();
 	}
 }
 /**
@@ -20,7 +22,20 @@ void ErrorLog::writeLog(const std::string &logMessage)
 */
 const char * ErrorLog::getLogLevelString(LogLevel level)
 {
-	return GET_V_NAME(level).c_str();
+	switch (level) {
+	case DEBUG:
+		return "DEBUG";
+	case INFO:
+		return "INFO";
+	case WARNING:
+		return "WARNING";
+	case ERROR:
+		return "ERROR";
+	case FATAL:
+		return "FATAL";
+	default:
+		return "UNKNOWN";
+	}
 }
 /**
 * @brief 현재 타임스탬프를 반환합니다.
@@ -54,8 +69,10 @@ void ErrorLog::log(LogLevel level, const std::string &message, const char *file,
 	if (level < currentLogLevel) return;
 
 	std::ostringstream ss;
-	ss << "[" << getCurrentTimestamp() << "] "
+	ss	<< "[" << getCurrentTimestamp() << "] "
+		<< getColorCode(level)
 		<< "[" << getLogLevelString(level) << "] "
+		<< "\033[0m"
 		<< file << ":" << line << " - " << message << std::endl;
 
 	writeLog(ss.str());
@@ -95,4 +112,20 @@ void ErrorLog::setLogFilePath(const std::string& logFilePath)
 {
 	logFile.close();
 	logFile.open(logFilePath, std::ios_base::trunc);
+}
+/**
+ * @brief 로그 레벨에 따른 색상 코드를 반환합니다.
+ * @param level 로그 레벨
+ * @return 색상 코드 
+ * @note DEBUG: Cyan, INFO: Green, WARNING: Yellow, ERROR: Red, FATAL: Magenta
+*/
+const char* ErrorLog::getColorCode(LogLevel level) {
+	switch (level) {
+		case DEBUG: return "\033[36m";
+		case INFO: return "\033[32m";
+		case WARNING: return "\033[33m";
+		case ERROR: return "\033[31m";
+		case FATAL: return "\033[35m";
+		default: return "\033[0m";
+	}
 }

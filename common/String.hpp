@@ -4,7 +4,7 @@
 #include <vector>
 #include <cstdarg>
 
-#include "String/Reader.hpp"
+#include "string/Reader.hpp"
 
 #define TRIM_SPACE " \n\v\t"
 #define GET_V_NAME(name) String::Split(#name, "::", false).back()
