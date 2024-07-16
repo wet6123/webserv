@@ -56,7 +56,7 @@ public:
 
     static void fatal(const std::string &message, const char *file, int line);
 
-
+	static const char *getColorCode(LogLevel level);
 };
 
 #endif
