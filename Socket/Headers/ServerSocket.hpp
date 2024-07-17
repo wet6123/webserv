@@ -1,7 +1,8 @@
 #ifndef SERVERSOCKET_HPP
 #define SERVERSOCKET_HPP
 
-#include "../../common/include/common.hpp"
+#include "../../common/ErrorLog.hpp"
+#include "../../common/Define.hpp"
 #include <netdb.h>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -18,16 +19,16 @@ public:
 	~ServerSocket();
 	ServerSocket &operator=(const ServerSocket &rhs);
 
-	WEB_SERVER::Type::FD	accept();
+	FD	accept();
 
 	void setSockOpt(int level, int optname, int opt);
 	void setAutoSockOpt();
-	void setNonBlocking(int socket);
+	void setNonBlocking(FD socket);
 	void initServerSocket();
 
 	void logError(const std::string &msg) const;
 
-	WEB_SERVER::Type::FD getServerSocket() const;
+	FD getServerSocket() const;
 	const char *getHost() const;
 	const char *getPort() const;
 	std::string getServerIP() const;
