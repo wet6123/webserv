@@ -206,7 +206,7 @@ bool Request::parseBody() {
 	}
 	if (_buffer.size() >= _contentLength) {
 		_body += _buffer.subStr(0, _contentLength);
-		_buffer.remove(0, _contentLength);
+		_buffer.clear();
 		_state = DONE;
 	}
 	return false;
