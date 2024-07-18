@@ -1,6 +1,6 @@
 #include "../inc/Request.hpp"
 
-Request::Request() : _state(HEADERS), _contentLength(0), _maxRequestSize(10 * 1024 * 1024) {
+Request::Request() : _state(HEADERS), _contentLength(0), _maxRequestSize(10 * 1024 * 1024), _maxBodySize(10 * 1024 * 1024) {
 	_buffer.reserve(1024);
 }
 
@@ -61,8 +61,10 @@ void Request::clearHeaders() {
 }
 
 void Request::parseBufferedData(std::vector<char>& buffer) {
+	LOG_DEBUG("Request::parseBufferedData: Parsing request data.");
 	if (_buffer.size() + buffer.size() > _maxRequestSize) {
 		LOG_ERROR("Request::parseBufferedData: Request size exceeds maximum size.");
+		throw PayloadTooLarge_413;
 		return;
 	}
 
@@ -83,6 +85,7 @@ void Request::parseBufferedData(std::vector<char>& buffer) {
 				continueParsing = parseChunkedBody();
 				break;
 			case DONE:
+				LOG_DEBUG("Request::parseBufferedData: Request parsing complete.");
 				_buffer.clear();
 				continueParsing = false;
 				break;
@@ -96,7 +99,6 @@ void Request::parseBufferedData(std::vector<char>& buffer) {
 
 void Request::finishHeaders() {
 	std::string contentLength = getHeader("Content-Length");
-
 	if (!contentLength.empty()) {
 		_contentLength = std::stoul(contentLength);
 		_state = BODY;
@@ -115,7 +117,7 @@ bool Request::parseHeaders() {
 			return false;
 		}
 
-		if ((line.str() == "\r\n" || line.str() == "\n")) {
+		if (line == "\r\n") {
 			_state = BODY;
 			finishHeaders();
 			return true;
@@ -133,7 +135,7 @@ bool Request::parseHeaders() {
 void Request::parseRequestLine(const std::string& line) {
 	std::istringstream iss(line);
 	if (!(iss >> _data.method >> _data.uri >> _data.version)) {
-		throw std::runtime_error("Invalid request line");
+		throw BadRequest_400;
 	}
 	setHeader("Method", _data.method);
 	setHeader("URI", _data.uri);
@@ -143,7 +145,8 @@ void Request::parseRequestLine(const std::string& line) {
 void Request::parseRequestHeader(const std::string& line) {
 	size_t pos = line.find(":");
 	if (pos == std::string::npos) {
-		throw std::runtime_error("Invalid header line");
+		LOG_ERROR("Request::parseRequestHeader: Invalid request header format.");
+		throw BadRequest_400;
 	}
 
 	std::string key = line.substr(0, pos);
@@ -158,11 +161,14 @@ void Request::parseRequestHeader(const std::string& line) {
 }
 
 bool Request::parseBody() {
+	if (_contentLength > _maxBodySize) {
+		LOG_ERROR("Request::parseBody: Request body size exceeds maximum size.");
+		throw PayloadTooLarge_413;
+	}
 	if (_buffer.size() >= _contentLength) {
 		_body += _buffer.subStr(0, _contentLength);
 		_buffer.remove(0, _contentLength);
 		_state = DONE;
-		return false;
 	}
 	return false;
 }

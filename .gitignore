@@ -39,6 +39,7 @@ secrets/
 # OS 생성 파일 무시
 .DS_Store?
 .DS_Store
+*.dSYM
 
 # 백업 파일 무시
 *~

@@ -25,6 +25,7 @@ private:
 	state			_state;
 	size_t 			_contentLength;
 	size_t			_maxRequestSize;
+	size_t 			_maxBodySize;
 	RequestData		_data;
 	RequestHeaders	_headers;
 	BinaryBuffer	_buffer;

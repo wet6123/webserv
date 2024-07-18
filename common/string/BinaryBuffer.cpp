@@ -88,26 +88,24 @@ BinaryBuffer &BinaryBuffer::operator<<(char c) {
 	return *this;
 }
 
-BinaryBuffer &BinaryBuffer::operator==(const BinaryBuffer &arr) {
-	if (this != &arr) {
-		std::vector<char>::operator=(arr);
-	}
-	return *this;
+bool BinaryBuffer::operator==(const BinaryBuffer &arr) const {
+	return this->size() == arr.size() && \
+		memcmp(this->data(), arr.data(), this->size()) == 0;
 }
 
-BinaryBuffer &BinaryBuffer::operator==(const std::vector<char> &vec) {
-	std::vector<char>::operator=(std::vector<char>(vec.begin(), vec.end()));
-	return *this;
+bool BinaryBuffer::operator==(const std::vector<char> &vec) const {
+	return this->size() == vec.size() && \
+		memcmp(this->data(), vec.data(), this->size()) == 0;
 }
 
-BinaryBuffer &BinaryBuffer::operator==(const std::string &str) {
-	std::vector<char>::operator=(std::vector<char>(str.begin(), str.end()));
-	return *this;
+bool BinaryBuffer::operator==(const std::string &str) const {
+	return this->size() == str.size() && \
+		memcmp(this->data(), str.data(), this->size()) == 0;
 }
 
-BinaryBuffer &BinaryBuffer::operator==(const char *str) {
-	std::vector<char>::operator=(std::vector<char>(str, str + strlen(str)));
-	return *this;
+bool BinaryBuffer::operator==(const char *str) const {
+	return this->size() == strlen(str) && \
+		memcmp(this->data(), str, this->size()) == 0;
 }
 
 std::string BinaryBuffer::str() const {

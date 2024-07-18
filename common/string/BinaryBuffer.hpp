@@ -35,11 +35,10 @@ public:
 	BinaryBuffer &operator<<(const char *str);
 	BinaryBuffer &operator<<(char c);
 
-	BinaryBuffer &operator==(const BinaryBuffer &arr);
-	BinaryBuffer &operator==(const std::vector<char> &vec);
-	BinaryBuffer &operator==(const std::string &str);
-	BinaryBuffer &operator==(const char *str);
-
+	bool operator==(const BinaryBuffer &arr) const;
+	bool operator==(const std::vector<char> &vec) const;
+	bool operator==(const std::string &str) const;
+	bool operator==(const char *str) const;
 
 	std::string str() const;
 	std::vector<char> vec() const;
