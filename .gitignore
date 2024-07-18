@@ -2,6 +2,8 @@
 .vscode/
 .idea/
 *.test
+# 테스트 파일 무시
+*test*
 
 # 의존성 파일 무시
 a.out
