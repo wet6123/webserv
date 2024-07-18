@@ -40,7 +40,7 @@
 
 struct RequestData {
 	std::string method;
-	std::string path;
+	std::string uri;
 	std::string version;
 	// request header
 	std::string host;

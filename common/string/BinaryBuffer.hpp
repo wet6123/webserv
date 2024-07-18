@@ -6,6 +6,8 @@
 #include <iostream>
 #include <fstream>
 
+namespace String {
+
 class BinaryBuffer : public std::vector<char> {
 public:
 	BinaryBuffer();
@@ -32,8 +34,16 @@ public:
 	BinaryBuffer &operator<<(const std::string &str);
 	BinaryBuffer &operator<<(const char *str);
 	BinaryBuffer &operator<<(char c);
+
+	BinaryBuffer &operator==(const BinaryBuffer &arr);
+	BinaryBuffer &operator==(const std::vector<char> &vec);
+	BinaryBuffer &operator==(const std::string &str);
+	BinaryBuffer &operator==(const char *str);
+
+
 	std::string str() const;
 	std::vector<char> vec() const;
+	char *c_str();
 
 	BinaryBuffer readLine();
 
@@ -49,4 +59,5 @@ public:
 
 std::ostream &operator<<(std::ostream &os, const BinaryBuffer &buffer);
 
+}
 #endif

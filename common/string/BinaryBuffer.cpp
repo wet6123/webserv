@@ -1,5 +1,7 @@
 #include "BinaryBuffer.hpp"
 
+namespace String {
+
 BinaryBuffer::BinaryBuffer() : std::vector<char>() {}
 
 BinaryBuffer::BinaryBuffer(const std::string &str) : std::vector<char>(str.begin(), str.end()) {}
@@ -86,6 +88,28 @@ BinaryBuffer &BinaryBuffer::operator<<(char c) {
 	return *this;
 }
 
+BinaryBuffer &BinaryBuffer::operator==(const BinaryBuffer &arr) {
+	if (this != &arr) {
+		std::vector<char>::operator=(arr);
+	}
+	return *this;
+}
+
+BinaryBuffer &BinaryBuffer::operator==(const std::vector<char> &vec) {
+	std::vector<char>::operator=(std::vector<char>(vec.begin(), vec.end()));
+	return *this;
+}
+
+BinaryBuffer &BinaryBuffer::operator==(const std::string &str) {
+	std::vector<char>::operator=(std::vector<char>(str.begin(), str.end()));
+	return *this;
+}
+
+BinaryBuffer &BinaryBuffer::operator==(const char *str) {
+	std::vector<char>::operator=(std::vector<char>(str, str + strlen(str)));
+	return *this;
+}
+
 std::string BinaryBuffer::str() const {
 	return std::string(begin(), end());
 }
@@ -94,18 +118,22 @@ std::vector<char> BinaryBuffer::vec() const {
 	return *this;
 }
 
+char *BinaryBuffer::c_str() {
+	push_back('\0');
+	pop_back();
+	return data();
+}
+
 BinaryBuffer BinaryBuffer::readLine() {
-	BinaryBuffer line;
+	BinaryBuffer line = "";
 
 	for (std::vector<char>::iterator it = begin(); it != end(); ++it) {
 		if (*it == '\n') {
-			line.insert(line.end(), begin(), it);
+			line.insert(line.end(), begin(), it + 1);
 			erase(begin(), it + 1);
-			return line;
+			break;
 		}
 	}
-	line = *this;
-	clear();
 	return line;
 }
 
@@ -120,7 +148,7 @@ size_t BinaryBuffer::find(char c) {
 			return i;
 		}
 	}
-	return -1;
+	return std::string::npos;
 }
 
 void BinaryBuffer::remove(size_t pos, size_t len) {
@@ -136,4 +164,6 @@ std::ostream & operator<<(std::ostream &os, const BinaryBuffer &buffer) {
 		os << *it;
 	}
 	return os;
+}
+
 }
