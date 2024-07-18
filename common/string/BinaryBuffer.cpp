@@ -108,6 +108,22 @@ bool BinaryBuffer::operator==(const char *str) const {
 		memcmp(this->data(), str, this->size()) == 0;
 }
 
+bool BinaryBuffer::operator!=(const BinaryBuffer &arr) const {
+	return !(*this == arr);
+}
+
+bool BinaryBuffer::operator!=(const std::vector<char> &vec) const {
+	return !(*this == vec);
+}
+
+bool BinaryBuffer::operator!=(const std::string &str) const {
+	return !(*this == str);
+}
+
+bool BinaryBuffer::operator!=(const char *str) const {
+	return !(*this == str);
+}
+
 std::string BinaryBuffer::str() const {
 	return std::string(begin(), end());
 }

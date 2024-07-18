@@ -40,6 +40,12 @@ public:
 	bool operator==(const std::string &str) const;
 	bool operator==(const char *str) const;
 
+	bool operator!=(const BinaryBuffer &arr) const;
+	bool operator!=(const std::vector<char> &vec) const;
+	bool operator!=(const std::string &str) const;
+	bool operator!=(const char *str) const;
+	
+
 	std::string str() const;
 	std::vector<char> vec() const;
 	char *c_str();
