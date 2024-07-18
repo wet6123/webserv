@@ -37,7 +37,35 @@
 
 	추후 추가 및 수정될 수 있음
 */
-
+/*
+{
+	Host,
+	User_Agent,
+	Referer,
+	Accept,
+	Accept_Charset,
+	Accept_Language,
+	Accept_Encoding,
+	If_Modified_Since,
+	Authorization,
+	Origin,
+	Cookie,
+	Date,
+	Cache_Control,
+	Connection,
+	Transfer_Encoding,
+	Content_Type,
+	Content_Length,
+	Content_Language,
+	Content_Location,
+	Content_Disposition,
+	Content_Encoding,
+	Last_Modified,
+	Allow,
+	ETag,
+	Expires
+};
+*/
 struct RequestData {
 	std::string method;
 	std::string uri;

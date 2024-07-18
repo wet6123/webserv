@@ -26,7 +26,6 @@ private:
 	size_t 			_contentLength;
 	size_t			_maxRequestSize;
 	size_t 			_maxBodySize;
-	RequestData		_data;
 	RequestHeaders	_headers;
 	BinaryBuffer	_buffer;
 	BinaryBuffer	_body;
@@ -36,15 +35,14 @@ public:
 	Request& operator=(const Request& rhs);
 	~Request();
 
-	RequestData getData() const;
 	BinaryBuffer getBody() const;
 	RequestHeaders getHeaders() const;
 	std::string getHeader(const std::string& key) const;
 	void setHeader(const std::string& key, const std::string& value);
 	void removeHeader(const std::string& key);
 	void clearHeaders();
-
 	void parseBufferedData(std::vector<char>& buffer);
+private:
 	void finishHeaders();
 	void parseRequestHeader(const std::string& line);
 	void parseRequestLine(const std::string& line);
