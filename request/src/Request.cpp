@@ -79,7 +79,7 @@ void Request::clearHeaders() {
  * @param buffer Request Data
  * @note Request Data를 파싱하여 Request Data, Header, Body를 추출
 */
-void Request::parseBufferedData(std::vector<char>& buffer) {
+void Request::parseBufferedData(const BinaryBuffer& buffer) {
 	LOG_DEBUG("Request::parseBufferedData: Parsing request data.");
 	if (_buffer.size() + buffer.size() > _maxRequestSize) {
 		LOG_ERROR("Request::parseBufferedData: Request size exceeds maximum size.");
@@ -236,4 +236,8 @@ bool Request::parseChunkedBody() {
 		_contentLength = 0;
 	}
 	return false;
+}
+
+bool Request::isDone() const {
+	return _state == DONE;
 }
