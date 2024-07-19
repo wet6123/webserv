@@ -42,6 +42,7 @@ public:
 	void removeHeader(const std::string& key);
 	void clearHeaders();
 	void parseBufferedData(std::vector<char>& buffer);
+	bool isDone() const;
 private:
 	void finishHeaders();
 	void parseRequestHeader(const std::string& line);

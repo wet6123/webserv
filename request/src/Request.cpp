@@ -186,11 +186,8 @@ void Request::parseRequestHeader(const std::string& line) {
 	std::string key = line.substr(0, pos);
 	std::string value = line.substr(pos + 1);
 
-	key.erase(0, key.find_first_not_of(" \t"));
-	key.erase(key.find_last_not_of(" \t") + 1);
-	value.erase(0, value.find_first_not_of(" \t"));
-	value.erase(value.find_last_not_of(" \t\r\n") + 1);
-
+	String::Trim(key);
+	String::Trim(value);
 	setHeader(key, value);
 }
 /**
@@ -236,4 +233,8 @@ bool Request::parseChunkedBody() {
 		_contentLength = 0;
 	}
 	return false;
+}
+
+bool Request::isDone() const {
+	return _state == DONE;
 }
