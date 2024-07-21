@@ -1,26 +1,197 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>CGI Calculator</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scientific Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+        }
+        .calculator {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .display {
+            width: calc(4 * 80px + 3 * 10px);
+            padding: 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.5em;
+            text-align: right;
+            margin-bottom: 20px;
+        }
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+        .button {
+            padding: 20px;
+            font-size: 1.2em;
+            border: none;
+            border-radius: 5px;
+            background-color: #f0f0f0;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .button:hover {
+            background-color: #ddd;
+        }
+        .button.operation {
+            background-color: #f9a825;
+            color: #fff;
+        }
+        .button.operation:hover {
+            background-color: #f57f17;
+        }
+    </style>
 </head>
 <body>
-    <h1>Calculator</h1>
-    <form action="/cgi-bin/main.py/calculator" method="post">
-        <label for="num1">Number 1:</label>
-        <input type="text" id="num1" name="num1"><br><br>
-        
-        <label for="num2">Number 2:</label>
-        <input type="text" id="num2" name="num2"><br><br>
-        
-        <label for="operation">Operation:</label>
-        <select id="operation" name="operation">
-            <option value="add">Add</option>
-            <option value="subtract">Subtract</option>
-            <option value="multiply">Multiply</option>
-            <option value="divide">Divide</option>
-        </select><br><br>
-        
-        <input type="submit" value="Calculate">
-    </form>
+    <div class="calculator">
+        <input type="text" class="display" id="display" disabled>
+        <div class="buttons">
+            <button class="button" onclick="appendNumber('7')">7</button>
+            <button class="button" onclick="appendNumber('8')">8</button>
+            <button class="button" onclick="appendNumber('9')">9</button>
+            <button class="button operation" onclick="chooseOperation('/')">/</button>
+            <button class="button" onclick="appendNumber('4')">4</button>
+            <button class="button" onclick="appendNumber('5')">5</button>
+            <button class="button" onclick="appendNumber('6')">6</button>
+            <button class="button operation" onclick="chooseOperation('*')">*</button>
+            <button class="button" onclick="appendNumber('1')">1</button>
+            <button class="button" onclick="appendNumber('2')">2</button>
+            <button class="button" onclick="appendNumber('3')">3</button>
+            <button class="button operation" onclick="chooseOperation('-')">-</button>
+            <button class="button" onclick="appendNumber('0')">0</button>
+            <button class="button" onclick="appendNumber('.')">.</button>
+            <button class="button operation" onclick="compute()">=</button>
+            <button class="button operation" onclick="chooseOperation('+')">+</button>
+            <button class="button" onclick="clearDisplay()">C</button>
+            <button class="button" onclick="deleteNumber()">DEL</button>
+            <button class="button operation" onclick="computePi()">π</button>
+            <button class="button operation" onclick="computeSqrt()">√</button>
+            <button class="button operation" onclick="computeTrig('sin')">sin</button>
+            <button class="button operation" onclick="computeTrig('cos')">cos</button>
+            <button class="button operation" onclick="computeTrig('tan')">tan</button>
+            <button class="button operation" onclick="computeLog()">log</button>
+            <button class="button operation" onclick="computeLn()">ln</button>
+            <button class="button operation" onclick="computeExp()">exp</button>
+            <button class="button operation" onclick="computeE()">e</button>
+        </div>
+    </div>
+    <script>
+        let display = document.getElementById('display');
+        let currentOperand = '';
+        let previousOperand = '';
+        let operation = undefined;
+
+        function appendNumber(number) {
+            if (number === '.' && currentOperand.includes('.')) return;
+            currentOperand = currentOperand.toString() + number.toString();
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            display.value = currentOperand;
+        }
+
+        function clearDisplay() {
+            currentOperand = '';
+            previousOperand = '';
+            operation = undefined;
+            updateDisplay();
+        }
+
+        function deleteNumber() {
+            currentOperand = currentOperand.toString().slice(0, -1);
+            updateDisplay();
+        }
+
+        function chooseOperation(op) {
+            if (currentOperand === '') return;
+            if (previousOperand !== '') {
+                compute();
+            }
+            operation = op;
+            previousOperand = currentOperand;
+            currentOperand = '';
+        }
+
+        function compute() {
+            let computation;
+            const prev = parseFloat(previousOperand);
+            const current = parseFloat(currentOperand);
+            if (isNaN(prev) || isNaN(current)) return;
+
+            switch (operation) {
+                case '+':
+                    computation = prev + current;
+                    break;
+                case '-':
+                    computation = prev - current;
+                    break;
+                case '*':
+                    computation = prev * current;
+                    break;
+                case '/':
+                    computation = prev / current;
+                    break;
+                default:
+                    return;
+            }
+
+            currentOperand = computation;
+            operation = undefined;
+            previousOperand = '';
+            updateDisplay();
+        }
+
+        function computePi() {
+            currentOperand = Math.PI;
+            updateDisplay();
+        }
+
+        function computeSqrt() {
+            currentOperand = Math.sqrt(currentOperand);
+            updateDisplay();
+        }
+
+        function computeTrig(func) {
+            currentOperand = Math[func](Math.radians(currentOperand));
+            updateDisplay();
+        }
+
+        function computeLog() {
+            currentOperand = Math.log10(currentOperand);
+            updateDisplay();
+        }
+
+        function computeLn() {
+            currentOperand = Math.log(currentOperand);
+            updateDisplay();
+        }
+
+        function computeExp() {
+            currentOperand = Math.exp(currentOperand);
+            updateDisplay();
+        }
+
+        function computeE() {
+            currentOperand = Math.E;
+            updateDisplay();
+        }
+
+        Math.radians = function(degrees) {
+            return degrees * Math.PI / 180;
+        };
+    </script>
 </body>
 </html>

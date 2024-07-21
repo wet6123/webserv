@@ -2,11 +2,9 @@
 
 from html import escape
 import os
-import cgi
 import cgitb
 import sys
 from upload import upload_file
-from calc import calculator
 from http import HTTPStatus
 
 # Enable debugging
@@ -41,6 +39,11 @@ def main():
     # Get the PATH_INFO environment variable
     path_info = os.environ.get("PATH_INFO", "")
 
+    # Absolute paths for HTML files
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    calc_html_path = os.path.join(base_dir, '../html/calc.html')
+    upload_html_path = os.path.join(base_dir, '../html/upload.html')
+
     # Default status code
     status_code = HTTPStatus.OK
 
@@ -48,8 +51,6 @@ def main():
     if request_method == "POST":
         if path_info == "/upload":
             response_body, status_code = upload_file()
-        elif path_info == "/calculate":
-            response_body, status_code = calculator()
         else:
             content_length = int(content_length)
             post_data = sys.stdin.read(content_length)
@@ -57,9 +58,9 @@ def main():
             status_code = HTTPStatus.OK
     else:
         if path_info == "/calculator":
-            response_body = load_html("calc.html")
+            response_body = load_html(calc_html_path)
         elif path_info == "/upload":
-            response_body = load_html("upload.html")
+            response_body = load_html(upload_html_path)
         else:
             response_body = "<html><body><h1>Hello, CGI!</h1><p>{}</p></body></html>".format(escape(query_string))
             status_code = HTTPStatus.OK
