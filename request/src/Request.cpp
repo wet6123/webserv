@@ -238,3 +238,11 @@ bool Request::parseChunkedBody() {
 bool Request::isDone() const {
 	return _state == DONE;
 }
+
+void Request::clear() {
+	_contentLength = 0;
+	_state = HEADERS;
+	_headers.clear();
+	_buffer.clear();
+	_body.clear();
+}

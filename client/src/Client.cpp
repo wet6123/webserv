@@ -1,7 +1,7 @@
 #include "../inc/Client.hpp"
 
 
-Client::Client(FD socket, const std::string &port) : _socket(socket), _port(port) {}
+Client::Client(FD socket, const std::string &port) : _socket(socket), _port(port), _status(OK_200) {}
 
 Client::~Client()
 {
@@ -54,20 +54,37 @@ int Client::send()
 }
 /**
 * @brief 클라이언트로부터 데이터를 받습니다.
-* @return 받은 데이터
-* @note 추후 reqeust class구현중 수정될 수 있음
+* @return 받은 데이터 크기
+* @note 에러 발생 시 -1 반환 및 예외 처리
 */
 int Client::receive(size_t size)
 {
-	BinaryBuffer _buffer;
-	_buffer.reserve(size);
-	int bytes = ::recv(_socket, _buffer.c_str(), size, 0);
+	char buffer[size];
+	int bytes = ::recv(_socket, buffer, size,  MSG_NOSIGNAL);
 	if (bytes == -1)
 	{
 		return -1;
 	}
-	_request.parseBufferedData(_buffer);
-	_buffer.clear();
+	if (bytes == 0)
+	{
+		LOG_DEBUG("Client disconnected");
+		throw ClientException("Client disconnected");
+	}
+	if (_status != OK_200) {
+    	LOG_DEBUG("Request processing halted due to previous error: " + std::to_string(_status));
+    	return bytes;
+	}
+	
+	try {
+	    _request.parseBufferedData(std::string(buffer, bytes));
+	} catch (const Status& e) {
+		_request.clear();
+		_status = e;
+	} catch (const std::exception& e) {
+		LOG_ERROR("Unexpected error during parsing: " + std::string(e.what()));
+		_request.clear();
+		_status = InternalServerError_500;
+	}
 	return bytes;
 }
 
@@ -79,7 +96,26 @@ int Client::receive()
 	{
 		return -1;
 	}
-	_request.parseBufferedData(buffer);
+	if (bytes == 0)
+	{
+		LOG_DEBUG("Client disconnected");
+		throw ClientException("Client disconnected");
+	}
+	if (_status != OK_200) {
+    	LOG_DEBUG("Request processing halted due to previous error: " + std::to_string(_status));
+    	return bytes;
+	}
+
+	try {
+	    _request.parseBufferedData(std::string(buffer, bytes));
+	} catch (const Status& e) {
+		_request.clear();
+		_status = e;
+	} catch (const std::exception& e) {
+		LOG_ERROR("Unexpected error during parsing: " + std::string(e.what()));
+		_request.clear();
+		_status = InternalServerError_500;
+	}
 	return bytes;
 }
 

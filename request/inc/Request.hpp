@@ -43,6 +43,7 @@ public:
 	void clearHeaders();
 	void parseBufferedData(const BinaryBuffer& buffer);
 	bool isDone() const;
+	void clear();
 private:
 	void finishHeaders();
 	void parseRequestHeader(const std::string& line);

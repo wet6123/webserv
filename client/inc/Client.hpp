@@ -40,6 +40,7 @@ private:
 	FD _socket;
 	PORT _port;
 	Request _request;
+	Status _status;
 };
 
 #endif
