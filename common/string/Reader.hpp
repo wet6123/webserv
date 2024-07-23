@@ -4,7 +4,8 @@
 #include <string>
 
 // #include "../string.hpp"
-
+namespace String
+{
 class Reader {
 private:
     std::istringstream iss;
@@ -19,5 +20,6 @@ public:
     int tellg();
     char operator[](size_t pos) const;
 };
+}
 
 #endif
