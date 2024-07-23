@@ -19,9 +19,14 @@ public:
 
 	virtual void close();
 	virtual int send();
-	virtual int receive(size_t size);
+	virtual int send(time_t timeout);
+	virtual int receive(size_t size, time_t timeout);
+	virtual int receive(time_t timeout);
 	virtual int receive();
+	virtual int receive(size_t size);
 
+	void setTimeOut(time_t sec);
+	void setTimeOutSend(time_t sec);
 	bool isDone() const;
 
 	class ClientException : public std::exception
@@ -36,7 +41,7 @@ public:
 private:
 	typedef String::BinaryBuffer BinaryBuffer;
 	Client();
-	static const int BUFFER_SIZE = 1024;
+	static const size_t BUFFER_SIZE = 1024;
 	FD _socket;
 	PORT _port;
 	Request _request;

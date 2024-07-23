@@ -1,6 +1,5 @@
 #include "../inc/Client.hpp"
 
-
 Client::Client(FD socket, const std::string &port) : _socket(socket), _port(port), _status(OK_200) {}
 
 Client::~Client()
@@ -51,6 +50,11 @@ int Client::send()
 		}
 	}
 	return bytes;
+}
+int Client::send(time_t timeout)
+{
+	setTimeOutSend(timeout);
+	return send();
 }
 /**
 * @brief 클라이언트로부터 데이터를 받습니다.
@@ -122,4 +126,31 @@ int Client::receive()
 bool Client::isDone() const
 {
 	return _request.isDone();
+}
+
+void Client::setTimeOut(time_t sec)
+{
+	struct timeval tv;
+	tv.tv_sec = sec;
+	tv.tv_usec = 0;
+	setsockopt(_socket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
+}
+
+void Client::setTimeOutSend(time_t sec)
+{
+	struct timeval tv;
+	tv.tv_sec = sec;
+	tv.tv_usec = 0;
+	setsockopt(_socket, SOL_SOCKET, SO_SNDTIMEO, (const char*)&tv, sizeof tv);
+}
+
+int Client::receive(time_t timeout)
+{
+	setTimeOut(timeout);
+	return receive(BUFFER_SIZE);
+}
+
+int Client::receive(size_t size, time_t timeout) {
+	setTimeOut(timeout);
+	return receive(size);	
 }
