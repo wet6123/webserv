@@ -123,12 +123,15 @@ bool Request::parseHeaders() {
 	while (_state == HEADERS && !_buffer.empty()) {
 		BinaryBuffer line = _buffer.readLine();
 
+		if (line[line.size() - 1] != '\r') {
+			throw BadRequest_400;
+		}
+
 		if (line.empty()) {
 			return false;
 		}
 
 		if (line == "\r\n") {
-			_state = BODY;
 			finishHeaders();
 			return true;
 		}
@@ -146,13 +149,23 @@ bool Request::parseHeaders() {
 */
 void Request::finishHeaders() {
 	std::string contentLength = getHeader("Content-Length");
-	if (!contentLength.empty()) {
-		_contentLength = std::stoul(contentLength);
-		_state = BODY;
+	std::string Method = getHeader("Method");
+	if (!contentLength.empty() && Method == "POST") {
+		try {
+			_contentLength = std::stoul(contentLength);
+			_state = BODY;
+		}
+		catch (std::exception& e) {
+			LOG_ERROR("Request::finishHeaders: Invalid content length.");
+			throw BadRequest_400;
+		}
 	} else if (getHeader("Transfer-Encoding") == "chunked") {
 		_state = CHUNKED_BODY;
-	} else {
+	} else if (Method == "GET") {
 		_state = DONE;
+	} else {
+		LOG_ERROR("Request::finishHeaders: Invalid request.");
+		throw BadRequest_400;
 	}
 }
 /**
@@ -164,8 +177,24 @@ void Request::parseRequestLine(const std::string& line) {
 	std::string method, uri, version;
 	if (!(iss >> method >> uri >> version) || iss.fail() ){
 		LOG_ERROR("Request::parseRequestLine: Invalid request line format.");
-		throw BadRequest_400;
+		throw MisdirectedRequest_421;
 	}
+
+	if (method != "GET" && method != "POST" && method != "PUT" && method != "DELETE") {
+		LOG_ERROR("Request::parseRequestLine: Invalid request method.");
+		throw MethodNotAllowed_405;
+	}
+
+	if (version != "HTTP/1.1") {
+		LOG_ERROR("Request::parseRequestLine: Invalid request version.");
+		throw HttpVersionNotSupported_505;
+	}
+
+	if (uri.size() > 1024) {
+		LOG_ERROR("Request::parseRequestLine: Request URI exceeds maximum size.");
+		throw UriTooLong_414;
+	}
+
 	setHeader("Method", method);
 	setHeader("URI", uri);
 	setHeader("Version", version);
@@ -188,6 +217,17 @@ void Request::parseRequestHeader(const std::string& line) {
 
 	String::Trim(key);
 	String::Trim(value);
+
+	if (key.empty() || value.empty()) {
+		LOG_ERROR("Request::parseRequestHeader: Invalid request header format.");
+		throw BadRequest_400;
+	}
+
+	if (value.size() > 1024) {
+		LOG_ERROR("Request::parseRequestHeader: Request header value exceeds maximum size.");
+		throw RequestHeaderFieldsTooLarge_431;
+	}
+
 	setHeader(key, value);
 }
 /**
@@ -203,8 +243,13 @@ bool Request::parseBody() {
 	}
 	if (_buffer.size() >= _contentLength) {
 		_body += _buffer.subStr(0, _contentLength);
-		_buffer.clear();
-		_state = DONE;
+		_buffer.remove(0, _contentLength);
+		if (_buffer.size() == 2 || _buffer.empty()) {
+			_buffer.clear();
+			_state = DONE;
+		} else {
+			throw BadRequest_400;
+		}
 	}
 	return false;
 }
