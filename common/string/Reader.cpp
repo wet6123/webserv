@@ -1,5 +1,5 @@
 #include "Reader.hpp"
-
+namespace String {
 Reader::Reader() {};
 Reader::Reader(const std::string &content) : iss(content), _str(content) {}
 /**
@@ -37,3 +37,4 @@ int Reader::tellg() { return iss.tellg(); }
 * @return char : 문자열 인덱스 값
 */
 char Reader::operator[](size_t pos) const { return _str[pos]; }
+}
