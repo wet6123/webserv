@@ -14,6 +14,7 @@ enum State{
 };
 
 enum Method{
+    NONE,
     GET,
     POST,
     PUT,
@@ -94,4 +95,5 @@ enum Status{
     NotExtended_510 = 510,
     NetworkAuthenticationRequired_511 = 511,	
 };
+
 #endif

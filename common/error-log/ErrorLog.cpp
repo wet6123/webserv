@@ -1,4 +1,5 @@
 #include "../ErrorLog.hpp"
+#include "../String.hpp"
 
 ErrorLog::LogLevel ErrorLog::currentLogLevel = ErrorLog::DEBUG;
 std::ofstream ErrorLog::logFile;
@@ -111,7 +112,7 @@ void ErrorLog::fatal(const std::string &message, const char *fileName, int line)
 void ErrorLog::setLogFilePath(const std::string& logFilePath)
 {
 	logFile.close();
-	logFile.open(logFilePath, std::ios_base::trunc);
+	logFile.open(logFilePath.c_str(), std::ios_base::trunc);
 }
 /**
  * @brief 로그 레벨에 따른 색상 코드를 반환합니다.

@@ -9,6 +9,7 @@
 #include <iomanip>
 #include <cstdlib>
 #include <vector>
+#include "String.hpp"
 
 
 #define LOG_DEBUG(message) ErrorLog::debug(message, __FILE__, __LINE__)
@@ -56,7 +57,7 @@ public:
 
     static void fatal(const std::string &message, const char *file, int line);
 
-	static const char *getColorCode(LogLevel level);
+    static const char *getColorCode(LogLevel level);
 };
 
 #endif

@@ -9,7 +9,7 @@ namespace String
     * @param bool trim : 나눈 문자열 양옆 공백 제거 여부
     * @return std::vector<std::string> : 나눈 문자열을 저장한 벡터
     */
-    std::vector<std::string> Split(const std::string &str, const std::string &delim, bool trim = false) {
+    std::vector<std::string> Split(const std::string &str, const std::string &delim, bool trim) {
         std::istringstream iss(str);
         std::string buffer;
 
@@ -17,7 +17,8 @@ namespace String
         while (getline(iss, buffer, delim[0])) {
             if (trim)
                 buffer = Trim(buffer);
-            result.push_back(buffer);
+            if (buffer.length() > 0)
+                result.push_back(buffer);
         }
         return result;
     }

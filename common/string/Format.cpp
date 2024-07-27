@@ -1,7 +1,5 @@
 #include "../String.hpp"
 
-#include "../String.hpp"
-
 namespace String
 {
     /**
