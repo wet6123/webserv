@@ -52,6 +52,10 @@
         .button.operation:hover {
             background-color: #f57f17;
         }
+        .selected-operation {
+            background-color: #f57f17 !important;
+            color: #fff !important;
+        }
     </style>
 </head>
 <body>
@@ -61,30 +65,30 @@
             <button class="button" onclick="appendNumber('7')">7</button>
             <button class="button" onclick="appendNumber('8')">8</button>
             <button class="button" onclick="appendNumber('9')">9</button>
-            <button class="button operation" onclick="chooseOperation('/')">/</button>
+            <button class="button operation" data-op="/" onclick="chooseOperation('/')">÷</button>
             <button class="button" onclick="appendNumber('4')">4</button>
             <button class="button" onclick="appendNumber('5')">5</button>
             <button class="button" onclick="appendNumber('6')">6</button>
-            <button class="button operation" onclick="chooseOperation('*')">*</button>
+            <button class="button operation" data-op="*" onclick="chooseOperation('*')">×</button>
             <button class="button" onclick="appendNumber('1')">1</button>
             <button class="button" onclick="appendNumber('2')">2</button>
             <button class="button" onclick="appendNumber('3')">3</button>
-            <button class="button operation" onclick="chooseOperation('-')">-</button>
+            <button class="button operation" data-op="-" onclick="chooseOperation('-')">-</button>
             <button class="button" onclick="appendNumber('0')">0</button>
             <button class="button" onclick="appendNumber('.')">.</button>
-            <button class="button operation" onclick="compute()">=</button>
-            <button class="button operation" onclick="chooseOperation('+')">+</button>
+            <button class="button operation" data-op="=" onclick="compute()">=</button>
+            <button class="button operation" data-op="+" onclick="chooseOperation('+')">+</button>
             <button class="button" onclick="clearDisplay()">C</button>
             <button class="button" onclick="deleteNumber()">DEL</button>
-            <button class="button operation" onclick="computePi()">π</button>
-            <button class="button operation" onclick="computeSqrt()">√</button>
-            <button class="button operation" onclick="computeTrig('sin')">sin</button>
-            <button class="button operation" onclick="computeTrig('cos')">cos</button>
-            <button class="button operation" onclick="computeTrig('tan')">tan</button>
-            <button class="button operation" onclick="computeLog()">log</button>
-            <button class="button operation" onclick="computeLn()">ln</button>
-            <button class="button operation" onclick="computeExp()">exp</button>
-            <button class="button operation" onclick="computeE()">e</button>
+            <button class="button operation" data-op="pi" onclick="computePi()">π</button>
+            <button class="button operation" data-op="sqrt" onclick="computeSqrt()">√</button>
+            <button class="button operation" data-op="sin" onclick="computeTrig('sin')">sin</button>
+            <button class="button operation" data-op="cos" onclick="computeTrig('cos')">cos</button>
+            <button class="button operation" data-op="tan" onclick="computeTrig('tan')">tan</button>
+            <button class="button operation" data-op="log" onclick="computeLog()">log</button>
+            <button class="button operation" data-op="ln" onclick="computeLn()">ln</button>
+            <button class="button operation" data-op="exp" onclick="computeExp()">exp</button>
+            <button class="button operation" data-op="e" onclick="computeE()">e</button>
         </div>
     </div>
     <script>
@@ -92,6 +96,7 @@
         let currentOperand = '';
         let previousOperand = '';
         let operation = undefined;
+        let selectedOperationButton = null;
 
         function appendNumber(number) {
             if (number === '.' && currentOperand.includes('.')) return;
@@ -107,6 +112,9 @@
             currentOperand = '';
             previousOperand = '';
             operation = undefined;
+            if (selectedOperationButton) {
+                selectedOperationButton.classList.remove('selected-operation');
+            }
             updateDisplay();
         }
 
@@ -123,6 +131,17 @@
             operation = op;
             previousOperand = currentOperand;
             currentOperand = '';
+
+            // Update the UI to reflect the chosen operation
+            if (selectedOperationButton) {
+                selectedOperationButton.classList.remove('selected-operation');
+            }
+            selectedOperationButton = document.querySelector(`.button.operation[data-op="${op}"]`);
+            if (selectedOperationButton) {
+                selectedOperationButton.classList.add('selected-operation');
+            }
+
+            // Do not update display here
         }
 
         function compute() {
@@ -151,6 +170,9 @@
             currentOperand = computation;
             operation = undefined;
             previousOperand = '';
+            if (selectedOperationButton) {
+                selectedOperationButton.classList.remove('selected-operation');
+            }
             updateDisplay();
         }
 
