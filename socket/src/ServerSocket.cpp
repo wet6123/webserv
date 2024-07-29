@@ -1,4 +1,4 @@
-#include "../../Headers/ServerSocket.hpp"
+#include "../inc/ServerSocket.hpp"
 
 ServerSocket::ServerSocket(const std::string& host, const std::string& port)
 	: _host(host.c_str()), _port(port.c_str()), _serverSocket(-1) {}
