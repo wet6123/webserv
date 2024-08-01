@@ -4,7 +4,11 @@ Request::Request() : _state(HEADERS), _contentLength(0), _maxRequestSize(10 * 10
 	_buffer.reserve(1024);
 }
 
-Request::Request(const Request& other) : _headers(other._headers), _buffer(other._buffer), _body(other._body), _state(other._state), _contentLength(other._contentLength), _maxRequestSize(other._maxRequestSize) {}
+Request::Request(const Request& other) : _state(other._state), _contentLength(other._contentLength), _maxRequestSize(other._maxRequestSize), _maxBodySize(other._maxBodySize) {
+	_headers = other._headers;
+	_buffer = other._buffer;
+	_body = other._body;
+}
 
 Request& Request::operator=(const Request& rhs) {
 	if (this != &rhs) {

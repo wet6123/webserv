@@ -34,6 +34,7 @@ public:
 	public:
 		ClientException(const std::string &message) : _message(message) {}
 		virtual const char *what() const throw();
+		virtual ~ClientException() throw() {}
 	private:
 		std::string _message;
 	};

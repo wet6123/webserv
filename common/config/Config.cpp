@@ -49,11 +49,13 @@ namespace Config {
 
           if (success == false)
             ErrorLog::fatal("location member variable error, port : " + serv.getPort() + "", __FILE__, __LINE__);
-          for (size_t k = 0; k < locations.size(); j++) {
+          for (size_t k = 0; k < locations.size(); k++) {
             if (k == j)
               continue;
-            if (!locations[k].getUriPath().compare(loc.getUriPath()))
-             ErrorLog::fatal("location uri overlap, port : " + serv.getPort() + "", __FILE__, __LINE__);
+            if (!locations[k].getUriPath().compare(loc.getUriPath())) {
+				std::cout << locations[k].getUriPath() << " " << loc.getUriPath() << std::endl;
+            	ErrorLog::fatal("location uri overlap, port : " + serv.getPort() + "", __FILE__, __LINE__);
+			}
           }
         }
 

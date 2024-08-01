@@ -6,9 +6,9 @@ namespace FileSystem {
         bool success = true;
 
         file.open(path.c_str());
-        bool a = true;
-        a &= file.is_open();
-        a &= file.fail();
+        // bool a = true;
+        // a &= file.is_open();
+        // a &= file.fail();
         success &= !(file.is_open() == false || file.fail());
         file.close();
         return success;

@@ -5,9 +5,13 @@ class IClient
 {
 public:
 	virtual void close() = 0;
-	virtual int send(const std::string &data) = 0;
+	virtual int send() = 0;
+	virtual int send(time_t timeout) = 0;
+	virtual int receive(size_t size, time_t timeout) = 0;
+	virtual int receive(time_t timeout) = 0;
+	virtual int receive() = 0;
 	virtual int receive(size_t size) = 0;
-	virtual ~IClient() = 0;	
+	~IClient() {}
 };
 
 #endif

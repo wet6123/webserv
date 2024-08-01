@@ -83,7 +83,7 @@ Location* Server::getLocation(std::string path) const {
 
 // 완전 매칭
     if (!uri.compare(path)) {
-      std::cout << &(*it) << std::endl;
+    //   std::cout << &(*it) << std::endl;
       return (Location *)&(*it);
     } 
     else if (!uri.compare("/")) // 기본 매칭
