@@ -4,6 +4,7 @@
 #include <vector>
 #include <cstdarg>
 #include "string/Reader.hpp"
+#include "string/BinaryBuffer.hpp"
 
 #define TRIM_SPACE " \n\v\t"
 #define GET_V_NAME(name) String::Split(#name, "::", false).back()
@@ -18,6 +19,7 @@ namespace String
     std::string Format(std::string target, ...);
     std::string Itos(int n);
     class Reader;
+	class BinaryBuffer;
 }
 
 #endif
