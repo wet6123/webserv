@@ -1,4 +1,5 @@
 #include "../inc/Client.hpp"
+#include "../../common/String.hpp"
 
 Client::Client(FD socket, const std::string &port) : _socket(socket), _port(port), _status(OK_200) {}
 
@@ -75,7 +76,7 @@ int Client::receive(size_t size)
 		throw ClientException("Client disconnected");
 	}
 	if (_status != OK_200) {
-    	LOG_DEBUG("Request processing halted due to previous error: " + std::to_string(_status));
+    	LOG_DEBUG("Request processing halted due to previous error: " + String::Itos(_status));
     	return bytes;
 	}
 	
@@ -106,7 +107,7 @@ int Client::receive()
 		throw ClientException("Client disconnected");
 	}
 	if (_status != OK_200) {
-    	LOG_DEBUG("Request processing halted due to previous error: " + std::to_string(_status));
+    	LOG_DEBUG("Request processing halted due to previous error: " + String::Itos(_status));
     	return bytes;
 	}
 
