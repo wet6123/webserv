@@ -1,5 +1,4 @@
 #include "BinaryBuffer.hpp"
-#include <cstring>
 
 namespace String {
 
