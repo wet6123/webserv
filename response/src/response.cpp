@@ -1,6 +1,6 @@
-#include "../inc/response.hpp"
+#include "../inc/Response.hpp"
 
-Response::Response() : _status(Status::OK_200) {}
+Response::Response() : _status(OK_200) {}
 
 
 Response::Response(const Response &other) : _request(other._request) {}
@@ -71,7 +71,7 @@ const String::BinaryBuffer Response::getResponses() {
 
 void Response::clearAll() {
 	_version.clear();
-	_status = Status::OK_200;
+	_status = OK_200;
 	_headers.clear();
 	_body.clear();
 }

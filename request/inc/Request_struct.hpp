@@ -1,3 +1,6 @@
+#ifndef REQUEST_STRUCT_HPP
+#define REQUEST_STRUCT_HPP
+
 #include <iostream>
 #include "Request.hpp"
 #include "../../common/String.hpp"
@@ -138,3 +141,5 @@ namespace RequestData {
 		expires = _request.getHeader("Expires");
 	}
 };
+
+#endif

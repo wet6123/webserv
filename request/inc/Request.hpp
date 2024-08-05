@@ -1,3 +1,6 @@
+#ifndef REQUEST_HPP
+#define REQUEST_HPP
+
 #include <iostream>
 #include <map>
 #include <fstream>
@@ -51,3 +54,5 @@ private:
 	bool parseBody();
 	bool parseChunkedBody();
 };
+
+#endif

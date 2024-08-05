@@ -1,6 +1,9 @@
+#ifndef RESPONSE_HPP
+#define RESPONSE_HPP
+
 #include <iostream>
 #include "../../common/Config.hpp"
-#include "../../request/inc/request.hpp"
+#include "../../request/inc/Request.hpp"
 #include <map>
 
 
@@ -19,7 +22,7 @@ public:
 
     void setHeader(const std::string& name, const std::string& value);
 
-	void setRedirect(const std::string& url, Status status = Status::Found_302);
+	void setRedirect(const std::string& url, Status status = Found_302);
 
 	void setStatusCode(Status status);
 
@@ -52,3 +55,5 @@ private:
 	std::string _reason;
 	String::BinaryBuffer _body;
 };
+
+#endif
