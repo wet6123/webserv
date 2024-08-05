@@ -127,7 +127,12 @@ bool Request::parseHeaders() {
 	while (_state == HEADERS && !_buffer.empty()) {
 		BinaryBuffer line = _buffer.readLine();
 
-		if (line[line.size() - 1] != '\r') {
+		if (line.size() < 2) {
+			continue;
+		}
+
+		if (line.size() > 1 && line[line.size() - 2] != '\r') {
+			LOG_ERROR("Request::parseHeaders: Invalid request header format.");
 			throw BadRequest_400;
 		}
 

@@ -71,7 +71,8 @@
 	Expires
 };
 */
-namespace RequestData {
+
+struct RequestData {
 	std::string method;
 	std::string uri;
 	std::string version;
@@ -107,39 +108,8 @@ namespace RequestData {
 	std::string etag;
 	std::string expires;
 
-	void init(const Request& _request) {
-		method = _request.getHeader("Method");
-		uri = _request.getHeader("URI");
-		version = _request.getHeader("Version");
-		host = _request.getHeader("Host");
-		port = host.substr(host.find(":") + 1);
-		ip = host.substr(0, host.find(":"));
-		user_agent = _request.getHeader("User-Agent");
-		referer = _request.getHeader("Referer");
-		accept = _request.getHeader("Accept");
-		accept_charset = _request.getHeader("Accept-Charset");
-		accept_language = _request.getHeader("Accept-Language");
-		accept_encoding = _request.getHeader("Accept-Encoding");
-		if_modified_since = _request.getHeader("If-Modified-Since");
-		if_none_match = _request.getHeader("If-None-Match");
-		authorization = _request.getHeader("Authorization");
-		origin = _request.getHeader("Origin");
-		cookie = _request.getHeader("Cookie");
-		date = _request.getHeader("Date");
-		cache_control = _request.getHeader("Cache-Control");
-		connection = _request.getHeader("Connection");
-		transfer_encoding = _request.getHeader("Transfer-Encoding");
-		content_type = _request.getHeader("Content-Type");
-		content_length = String::ToInt(_request.getHeader("Content-Length"));
-		content_language = _request.getHeader("Content-Language");
-		content_location = _request.getHeader("Content-Location");
-		content_disposition = _request.getHeader("Content-Disposition");
-		content_encoding = _request.getHeader("Content-Encoding");
-		last_modified = _request.getHeader("Last-Modified");
-		allow = _request.getHeader("Allow");
-		etag = _request.getHeader("ETag");
-		expires = _request.getHeader("Expires");
-	}
+	
+
 };
 
 #endif

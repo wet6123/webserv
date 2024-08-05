@@ -5,6 +5,7 @@
 #include "../../common/Config.hpp"
 #include "../../request/inc/Request_struct.hpp"
 #include "../../common/FileSystem.hpp"
+#include "ResponseUtils.hpp"
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <sys/time.h>
@@ -21,6 +22,7 @@ public:
     void makeResponse();
 
 private:
+	void requestInit();
 	std::string getFilePath(const std::string& uri);
     Response handleRedirect();
     String::BinaryBuffer handleGetRequest();
@@ -39,22 +41,8 @@ private:
     std::string _query;
     std::string _pathInfo;
     std::string _scriptName;
+	RequestData _requestData;
 };
-
-namespace Utils {
-    std::string normalizePath(std::string uri);
-    std::string lastModify(const std::string& filePath);
-    std::string etag(const std::string& filePath);
-    std::string generateETag(const std::string& content);
-    std::string getCurTime();
-    std::string getFormattedTime(time_t time);
-    std::string getFileExtension(const std::string& filePath);
-    std::string getContentType(const std::string& extension);
-    std::string getExpirationTime(int seconds);
-    std::string getFormatSize(double size);
-    bool isValidPath(const std::string& path);
-    std::string getFileName(const std::string& filePath);
-}
 
 } // namespace ResponseHandle
 
