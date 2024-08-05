@@ -18,7 +18,9 @@ enum Method{
     GET,
     POST,
     PUT,
-    DELETE
+    DELETE,
+	HEAD,
+	INVALID
 };
 
 enum Status{

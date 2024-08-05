@@ -4,7 +4,6 @@
 #include <sstream>
 #include <string>
 
-#include "Request_struct.hpp"
 #include "../../common/String.hpp"
 #include "../../common/ErrorLog.hpp"
 #include "../../common/Define.hpp"
