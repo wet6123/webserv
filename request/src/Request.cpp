@@ -156,7 +156,7 @@ void Request::finishHeaders() {
 	std::string Method = getHeader("Method");
 	if (!contentLength.empty() && Method == "POST") {
 		try {
-			_contentLength = std::stoul(contentLength);
+			_contentLength = String::ToUL(contentLength);
 			_state = BODY;
 		}
 		catch (std::exception& e) {

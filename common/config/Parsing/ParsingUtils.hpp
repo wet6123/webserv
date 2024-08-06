@@ -41,7 +41,7 @@ typedef struct {
   std::string uriPath;
   std::string idxPath;
   std::string rootPath;
-  std::string redirectPath;
   std::string autoindexPath;
+  std::pair<std::string, ushort> redirect;
 } LocationData;
 #endif

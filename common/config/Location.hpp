@@ -23,7 +23,7 @@ public:
   void setIdxPath(std::string path);
   void setCgiPath(std::string path);
   void setRootPath(std::string path);
-  void setRedirectPath(std::string path);
+  void setRedirect(std::pair<std::string, ushort> pair);
   void setAutoindexPath(std::string path);
 
   int getMethods() const;
@@ -33,7 +33,7 @@ public:
   std::string getUriPath() const;
   std::string getIdxPath() const;
   std::string getRootPath() const;
-  std::string getRedirectPath() const;
+  std::pair<std::string, ushort> getRedirect() const;
   std::string getAutoindexPath() const;
 };
 
