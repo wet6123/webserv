@@ -46,6 +46,7 @@ LocationData makeLocationData(Dict dict) {
       data.rootPath = values[size++];
     } else if (!key.compare("index")) {
       data.idxPath = values[size++];
+      data.originalIdxPath = data.idxPath;
     } else {
       ErrorLog::fatal("wtf " + key + " location member variable", __FILE__, __LINE__);
     }

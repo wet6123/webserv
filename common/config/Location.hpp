@@ -21,6 +21,7 @@ public:
   void setData(LocationData data);
   void setUriPath(std::string path);
   void setIdxPath(std::string path);
+  void setOriginalIdxPath(std::string path);
   void setCgiPath(std::string path);
   void setRootPath(std::string path);
   void setRedirect(std::pair<std::string, ushort> pair);
@@ -32,6 +33,7 @@ public:
   std::string getCgiPath() const;
   std::string getUriPath() const;
   std::string getIdxPath() const;
+  std::string getOriginalIdxPath() const;
   std::string getRootPath() const;
   std::pair<std::string, ushort> getRedirect() const;
   std::string getAutoindexPath() const;
