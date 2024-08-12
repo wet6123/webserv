@@ -70,8 +70,7 @@ namespace Config {
   }
 
   /* #region getter */
-  Server getServer(std::string port) {
-	
+  Server getServer(std::string port) {	
     std::vector<Server>::const_iterator ret = std::find_if(_servers.begin(), _servers.end(), CompareValue(port));
 
     if (ret == _servers.end())
