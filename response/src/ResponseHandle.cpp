@@ -2,7 +2,7 @@
 
 namespace ResponseHandle {
 
-Handler::Handler(const Request &request) : _request(request)
+Handler::Handler(const Request &request, const std::string& port) : _request(request), _port(port)
 {
 	requestInit();
 	_server = Config::getServer(_requestData.port);
@@ -46,8 +46,8 @@ void Handler::requestInit()
 	
 }
 
-void makeResponse(const Request &request) {
-	Handler handler(request);
+void makeResponse(const Request &request, const std::string& port) {
+	Handler handler(request, port);
 	LOG_DEBUG("Handler created");
 	handler.makeResponse();
 }
@@ -87,8 +87,9 @@ void Handler::initPathFromLocation() {
 	LOG_DEBUG("Handler::initPathFromLocation: Query: " + _query);
 	_requestData.uri = _requestData.uri.substr(0, _requestData.uri.find("?"));
 	LOG_DEBUG("Handler::initPathFromLocation: URI: " + _requestData.uri);
-
-	_server = Config::getServer(_requestData.port);
+	LOG_DEBUG("request data port: " + _port);
+	
+	_server = Config::getServer(_port);
 	LOG_DEBUG("Handler::initPathFromLocation: Server: " + _server.getRootPath());
 
 	if (_server.getRootPath().empty())
@@ -105,6 +106,7 @@ void Handler::initPathFromLocation() {
 	}
 
 	_filePath = getFilePath(_requestData.uri);
+	LOG_DEBUG("Handler::initPathFromLocation: File Path: " + _filePath);
 	if (_filePath.empty())
 	{
 		throw InternalServerError_500;
@@ -113,6 +115,7 @@ void Handler::initPathFromLocation() {
 	if (!Utils::isValidPath(_filePath)) {
 		throw BadRequest_400;
 	}
+
 	if (_filePath.length() > 1 && _filePath[_filePath.length() - 1] == '/') {
 		if (FileSystem::ExistDir(_filePath) == true) {
 			DIR *dir = opendir(_filePath.c_str());
@@ -120,10 +123,15 @@ void Handler::initPathFromLocation() {
 				throw Forbidden_403;
 			}
 			std::string tmpPath = _filePath + _location->getIdxPath();
+			// LOG_DEBUG("Handler::initPathFromLocation: Index Path: " + tmpPath);
+			_filePath = _location->getIdxPath();
+			LOG_DEBUG("Handler::initPathFromLocation: Index Path: " + _filePath);
 			if (FileSystem::Exist(_filePath) == true) {
-				_filePath = tmpPath;
+				// _filePath = tmpPath;
 			}
 		} else {
+			std::cout << "file Path : " << _filePath << std::endl;
+			// std::cout << "404" << std::endl;
 			throw NotFound_404;
 		}
 	} else {
@@ -131,7 +139,7 @@ void Handler::initPathFromLocation() {
 			_filePath = _filePath.substr(0, _filePath.find_last_of('/') + 1);
 		}
 	}
-
+	LOG_DEBUG("Handler::initPathFromLocation: File Path: " + _filePath);
 }
 
 Method Handler::getMethodNum(const std::string &method) {
@@ -182,6 +190,10 @@ std::string Handler::getFilePath(const std::string& uri) {
 		filePath += "/";
 	}
 
+	if (filePath[0] != '/') {
+		filePath = "/" + filePath;
+	}
+
 	return filePath;
 }
 
@@ -196,6 +208,7 @@ Response Handler::handleRedirect()
 	{
 		// int statusCode = std::stoi(returnCode);
 		response.setRedirect(returnUrl, Found_302);
+		response.setReason(GET_V_NAME(Found_302));
 		
 		response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
 		response.setHeader("Pragma", "no-cache");
@@ -210,6 +223,7 @@ Response Handler::handleRedirect()
 }
 
 String::BinaryBuffer Handler::handleGetRequest() {
+	LOG_DEBUG("Handler::handleGetRequest: Start");
 
 	if ((!_requestData.if_modified_since.empty() || !_requestData.if_none_match.empty()) && \
 		(_requestData.if_modified_since == Utils::lastModify(_filePath) || _requestData.if_none_match == Utils::etag(_filePath)))
@@ -251,12 +265,18 @@ String::BinaryBuffer Handler::handleGetRequest() {
 
 		if (body.size() != 0) {
 			_response.setStatusCode(OK_200);
+			_response.setHeader("Connection", "keep-alive");
+			_response.setHeader("Server", "42Webserv");
+			_response.setReason(GET_V_NAME(OK_200));
 			_response.setHeader("Date", Utils::getCurTime());
 			_response.setHeader("Content-Type", Utils::getContentType(extension));
 			_response.setBody(body.str());
 			_response.setHeader("Content-Length", String::Itos(body.size()));
 		} else {
 			_response.setStatusCode(NoContent_204);
+			_response.setHeader("Connection", "keep-alive");
+			_response.setHeader("Server", "42Webserv");
+			_response.setReason(GET_V_NAME(NoContent_204));
 			_response.setHeader("Date", Utils::getCurTime());
 			_response.setHeader("Content-Type", Utils::getContentType(extension));
 		}
@@ -291,6 +311,7 @@ String::BinaryBuffer Handler::handleGetRequest() {
 			}
 		}
 	}
+	std::cout << "response : " << _response.getResponses() << std::endl;
 	return _response.getResponses();
 }
 
@@ -340,7 +361,6 @@ String::BinaryBuffer Handler::handlePostRequest()
 	_response.setHeader("Last-Modified", Utils::lastModify(filePath));
 	_response.setHeader("ETag", Utils::etag(filePath));
 	_response.setBody(responseBody);
-
 	return _response.getResponses();
 }
 

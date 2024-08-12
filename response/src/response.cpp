@@ -1,6 +1,6 @@
 #include "../inc/Response.hpp"
 
-Response::Response() : _status(OK_200) {}
+Response::Response() : _version("HTTP/1.1"), _status(OK_200)  {}
 
 
 Response::Response(const Response &other) : _request(other._request) {}

@@ -6,7 +6,7 @@
 #include "string/Reader.hpp"
 #include "string/BinaryBuffer.hpp"
 
-#define TRIM_SPACE " \n\v\t"
+#define TRIM_SPACE " \n\v\t\r"
 #define GET_V_NAME(name) String::Split(#name, "::", false).back()
 
 namespace String 
