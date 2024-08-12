@@ -5,6 +5,7 @@ namespace ResponseHandle {
 Handler::Handler(const Request &request, const std::string& port) : _request(request), _port(port)
 {
 	requestInit();
+	ResponseHandle::Utils::setReasonPhrase();
 	_server = Config::getServer(_requestData.port);
 
 }
@@ -122,16 +123,15 @@ void Handler::initPathFromLocation() {
 			if (dir == NULL && errno == EACCES) {
 				throw Forbidden_403;
 			}
-			std::string tmpPath = _filePath + _location->getIdxPath();
-			// LOG_DEBUG("Handler::initPathFromLocation: Index Path: " + tmpPath);
-			_filePath = _location->getIdxPath();
-			LOG_DEBUG("Handler::initPathFromLocation: Index Path: " + _filePath);
-			if (FileSystem::Exist(_filePath) == true) {
-				// _filePath = tmpPath;
+			std::string tmpPath = _filePath + _location->getOriginalIdxPath();
+			tmpPath = ResponseHandle::Utils::normalizePath(tmpPath);
+			if (FileSystem::Exist(tmpPath) == true) {
+				_filePath = tmpPath;
+				LOG_DEBUG("Handler::initPathFromLocation: File Path: " + _filePath);
 			}
 		} else {
 			std::cout << "file Path : " << _filePath << std::endl;
-			// std::cout << "404" << std::endl;
+			
 			throw NotFound_404;
 		}
 	} else {
@@ -190,9 +190,9 @@ std::string Handler::getFilePath(const std::string& uri) {
 		filePath += "/";
 	}
 
-	if (filePath[0] != '/') {
-		filePath = "/" + filePath;
-	}
+	// if (filePath[0] != '/') {
+	// 	filePath = "/" + filePath;
+	// }
 
 	return filePath;
 }
@@ -201,14 +201,13 @@ std::string Handler::getFilePath(const std::string& uri) {
 Response Handler::handleRedirect()
 {
 	Response response;
-	std::string returnCode = GET_V_NAME(Found_302);
-	std::string returnUrl = _location->getRedirectPath();
+	Status returnCode = static_cast<Status>(_location->getRedirect().second);
+	std::string returnUrl = _location->getRedirect().first;
 
-	if (!returnCode.empty() && !returnUrl.empty())
+	if (!returnUrl.empty())
 	{
 		// int statusCode = std::stoi(returnCode);
-		response.setRedirect(returnUrl, Found_302);
-		response.setReason(GET_V_NAME(Found_302));
+		response.setRedirect(returnUrl, returnCode);
 		
 		response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
 		response.setHeader("Pragma", "no-cache");
@@ -236,7 +235,7 @@ String::BinaryBuffer Handler::handleGetRequest() {
 		return _response.getResponses();
 	}
 
-	if (!_location->getRedirectPath().empty())
+	if (!_location->getRedirect().first.empty())
 	{
 		return handleRedirect().getResponses();
 	}
@@ -267,7 +266,6 @@ String::BinaryBuffer Handler::handleGetRequest() {
 			_response.setStatusCode(OK_200);
 			_response.setHeader("Connection", "keep-alive");
 			_response.setHeader("Server", "42Webserv");
-			_response.setReason(GET_V_NAME(OK_200));
 			_response.setHeader("Date", Utils::getCurTime());
 			_response.setHeader("Content-Type", Utils::getContentType(extension));
 			_response.setBody(body.str());
@@ -276,7 +274,6 @@ String::BinaryBuffer Handler::handleGetRequest() {
 			_response.setStatusCode(NoContent_204);
 			_response.setHeader("Connection", "keep-alive");
 			_response.setHeader("Server", "42Webserv");
-			_response.setReason(GET_V_NAME(NoContent_204));
 			_response.setHeader("Date", Utils::getCurTime());
 			_response.setHeader("Content-Type", Utils::getContentType(extension));
 		}
@@ -318,7 +315,7 @@ String::BinaryBuffer Handler::handleGetRequest() {
 String::BinaryBuffer Handler::handlePostRequest()
 {
 	// 리다이렉트 처리
-	if (!_location->getRedirectPath().empty()) {
+	if (!_location->getRedirect().first.empty()) {
 		return handleRedirect().getResponses();
 	}
 

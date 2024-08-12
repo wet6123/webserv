@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include "../../request/inc/Request_struct.hpp"
+#include "../../common/Define.hpp"
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <sys/time.h>
@@ -23,6 +24,8 @@ namespace ResponseHandle {
 		std::string getFormatSize(double size);
 		bool isValidPath(const std::string& path);
 		std::string getFileName(const std::string& filePath);
+		void setReasonPhrase();
+		extern std::map<Status, std::string> REASON_PHRASE;
 	}
 }
 

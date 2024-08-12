@@ -29,10 +29,6 @@ void Response::setRedirect(const std::string &url, Status status) {
 	setHeader("Location", url);
 }
 
-void Response::setReason(const std::string &reason) {
-	_reason = reason;
-}
-
 void Response::setStatusCode(Status status) {
 	_status = status;
 }
@@ -59,7 +55,15 @@ void Response::setBody(const std::string &body) {
 
 const String::BinaryBuffer Response::getResponses() {
 	String::BinaryBuffer response;
-	response += _version + " " + String::Itos(_status) + " " + _reason + "\r\n";
+	std::map<Status, std::string>::iterator it = ResponseHandle::Utils::REASON_PHRASE.find(_status);
+	std::string reason;
+	if (it != ResponseHandle::Utils::REASON_PHRASE.end()) {
+		reason = it->second;
+	}
+	else {
+		reason = "Unknown";
+	}
+	response += _version + " " + String::Itos(_status) + " " + reason + "\r\n";
 	for (Headers::iterator it = _headers.begin(); it != _headers.end(); it++) {
 		response += it->first + ": " + it->second + "\r\n";
 	}

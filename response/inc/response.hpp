@@ -4,6 +4,7 @@
 #include <iostream>
 #include "../../common/Config.hpp"
 #include "../../request/inc/Request.hpp"
+#include "ResponseUtils.hpp"
 #include <map>
 
 
@@ -25,8 +26,6 @@ public:
 	void setRedirect(const std::string& url, Status status = Found_302);
 
 	void setStatusCode(Status status);
-
-	void setReason(const std::string& reason);
 
 	std::string getVersion() const;
 
