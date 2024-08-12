@@ -2,7 +2,7 @@
 
 namespace ResponseHandle {
 
-Handler::Handler(const Request &request, const std::string& port, const std::string& userId) : _request(request), _port(port), _userId(userId)
+Handler::Handler(const Request &request, const std::string& port) : _request(request), _port(port)
 {
 	requestInit();
 	ResponseHandle::Utils::setReasonPhrase();
@@ -47,8 +47,8 @@ void Handler::requestInit()
 	
 }
 
-void makeResponse(const Request &request, const std::string& port, const std::string& userId) {
-	Handler handler(request, port, userId);
+void makeResponse(const Request &request, const std::string& port) {
+	Handler handler(request, port);
 	LOG_DEBUG("Handler created");
 	handler.makeResponse();
 }
@@ -223,8 +223,18 @@ String::BinaryBuffer Handler::handleGetRequest() {
 	LOG_DEBUG("Handler::handleGetRequest: Start");
 
 	// If-Modified-Since 또는 If-None-Match 헤더 처리
-	if ((!_requestData.if_modified_since.empty() || !_requestData.if_none_match.empty()) &&
-		(_requestData.if_modified_since == Utils::lastModify(_filePath) || _requestData.if_none_match == Utils::etag(_filePath)))
+	// etag가 우선순위가 더 높음
+	if (!_requestData.if_none_match.empty() && _requestData.if_none_match == Utils::etag(_filePath))
+	{
+		_response.setStatusCode(NotModified_304); // Not Modified
+		_response.setHeader("Content-Length", "0");
+		_response.setHeader("Date", Utils::getCurTime());
+		_response.setHeader("Server", "42Webserv");
+		_response.setHeader("Connection", _requestData.connection);
+		return _response.getResponses();
+	}
+
+	if (!_requestData.if_modified_since.empty() && _requestData.if_modified_since == Utils::lastModify(_filePath))
 	{
 		_response.setStatusCode(NotModified_304); // Not Modified
 		_response.setHeader("Content-Length", "0");
@@ -330,9 +340,6 @@ String::BinaryBuffer Handler::handleGetRequest() {
     }
 
 	LOG_DEBUG("Handler::handleGetRequest: Response prepared");
-	_response.setCookie("sessionId", "42Webserv");
-	_response.setCookie("user", _userId, 3600);
-	_response.setCookie("preferencesCookie", "theme=dark", 3600, "/");
 	return _response.getResponses();
 }
 
@@ -486,5 +493,6 @@ String::BinaryBuffer Handler::handleDeleteRequest()
 	}
 	return _response.getResponses();
 }
-}
+
+} // namespace ResponseHandle
 

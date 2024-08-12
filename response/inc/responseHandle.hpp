@@ -14,11 +14,11 @@
 
 namespace ResponseHandle {
 
-	void makeResponse(const Request& request, const std::string& port, const std::string& userId);
+	void makeResponse(const Request& request, const std::string& port);
 
 class Handler {
 public:
-    Handler(const Request& request, const std::string& port, const std::string& userId);
+    Handler(const Request& request, const std::string& port);
     void makeResponse();
 
 private:
