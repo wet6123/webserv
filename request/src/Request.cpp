@@ -224,8 +224,8 @@ void Request::parseRequestHeader(const std::string& line) {
 	std::string key = line.substr(0, pos);
 	std::string value = line.substr(pos + 1);
 
-	String::Trim(key);
-	String::Trim(value);
+	key = String::Trim(key);
+	value = String::Trim(value);
 
 	if (key.empty() || value.empty()) {
 		LOG_ERROR("Request::parseRequestHeader: Invalid request header format.");
