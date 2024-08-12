@@ -3,7 +3,6 @@
 
 Client::Client(FD socket, const std::string &port) : _socket(socket), _port(port), _status(OK_200)
 {
-	generateUserId(16);
 }
 
 Client::~Client()
@@ -164,4 +163,9 @@ int Client::receive(size_t size, time_t timeout) {
 bool Client::isTimeout() const
 {
 	return time(NULL) - _start > _timeout;
+}
+
+bool Client::isKeepAlive() const
+{
+	return _request.getHeader("Connection") == "keep-alive";
 }

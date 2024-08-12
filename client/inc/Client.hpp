@@ -32,6 +32,7 @@ public:
 	void setTimeOutSend(time_t sec);
 	bool isDone() const;
 	bool isTimeout() const;
+	bool isKeepAlive() const;
 
 	class ClientException : public std::exception
 	{
