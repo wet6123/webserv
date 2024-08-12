@@ -32,7 +32,6 @@ public:
 	void setTimeOutSend(time_t sec);
 	bool isDone() const;
 	bool isTimeout() const;
-	std::string getUserId() const;
 
 	class ClientException : public std::exception
 	{
@@ -47,7 +46,6 @@ public:
 private:
 	typedef String::BinaryBuffer BinaryBuffer;
 	Client();
-	void generateUserId(size_t length);
 	static const size_t BUFFER_SIZE = 1024;
 	FD _socket;
 	PORT _port;
