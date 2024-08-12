@@ -14,7 +14,6 @@ namespace FileSystem {
 		std::string group;
 		mode_t permissions;
 	};
-	bool Exist(const std::string &path);
     bool ExistFile(std::string path);
     bool ExistDir(std::string path);
 	std::streamsize GetFileSize(std::ifstream &file);

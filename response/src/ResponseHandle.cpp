@@ -125,17 +125,15 @@ void Handler::initPathFromLocation() {
 			}
 			std::string tmpPath = _filePath + _location->getOriginalIdxPath();
 			tmpPath = ResponseHandle::Utils::normalizePath(tmpPath);
-			if (FileSystem::Exist(tmpPath) == true) {
+			if (FileSystem::ExistDir(tmpPath) == true || FileSystem::Exist(tmpPath) == true) {
 				_filePath = tmpPath;
 				LOG_DEBUG("Handler::initPathFromLocation: File Path: " + _filePath);
 			}
 		} else {
-			std::cout << "file Path : " << _filePath << std::endl;
-			
 			throw NotFound_404;
 		}
 	} else {
-		if (FileSystem::Exist(_filePath) == false) {
+		if (FileSystem::ExistDir(_filePath) == false && FileSystem::Exist(_filePath) == false) {
 			_filePath = _filePath.substr(0, _filePath.find_last_of('/') + 1);
 		}
 	}
@@ -237,6 +235,7 @@ String::BinaryBuffer Handler::handleGetRequest() {
 
 	if (!_location->getRedirect().first.empty())
 	{
+		LOG_DEBUG("Handler::handleGetRequest: Redirect");
 		return handleRedirect().getResponses();
 	}
 
