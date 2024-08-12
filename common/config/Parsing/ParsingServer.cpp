@@ -4,7 +4,7 @@
 
 typedef std::vector<Location> t_vecLocation;
 
-ServerData makeServerData(Dict dict) {
+ServerData makeServerData(Dict& dict) {
   ServerData data;
   bool success = true;
 
@@ -45,7 +45,7 @@ ServerData makeServerData(Dict dict) {
     ErrorLog::fatal("server member variable is not valid", __FILE__, __LINE__);
 
   if (!data.rootPath.empty()) {
-    data.idxPath = data.rootPath + data.idxPath;
+
     if (!data.jsPath.empty())
       data.jsPath = data.rootPath + data.jsPath;
     if (!data.cssPath.empty())
@@ -113,7 +113,8 @@ void updateLocations(t_vecLocation &locations, Server serv) {
     }
 
     if (loc.getIdxPath().empty()) {
-      loc.setIdxPath(servIdxPath);
+      loc.setIdxPath(servRoot + servIdxPath);
+      loc.setOriginalIdxPath(servIdxPath);
     }
 
     if (!loc.getCgiPath().empty()) {

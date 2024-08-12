@@ -32,7 +32,8 @@ namespace Config {
         if (!serv.getImgPath().empty())
           success &= FileSystem::ExistDir(serv.getImgPath());
         success &= FileSystem::ExistDir(serv.getRootPath());
-        success &= FileSystem::ExistFile(serv.getIdxPath());
+        success &= FileSystem::ExistFile(serv.getRootPath() + serv.getIdxPath());
+        std::cout << serv.getIdxPath() << std::endl;
         if (success == false)
           ErrorLog::fatal("server member variable error, port : " + serv.getPort() + "", __FILE__, __LINE__);
         std::vector<Location> locations = serv.getLocations();
@@ -128,10 +129,10 @@ namespace Config {
       for (size_t j = 0; j < locs.size(); j++) {
         Location loc = locs[j];
         std::cout << "    location " + loc.getUriPath() + " {" << ";" << std::endl;
-        std::cout << "        index " + loc.getIdxPath() << ";" << std::endl;
+        std::cout << "        index " + loc.getOriginalIdxPath() << ";" << std::endl;
         std::cout << "        autoindex " + (std::string)(loc.getIsAutoindex() ? "on" : "off") << ";" << std::endl;
         std::cout << "        cgi-path " + loc.getCgiPath() << ";" << std::endl;
-        std::cout << "        return " + loc.getRedirectPath() << ";" << std::endl;
+        std::cout << "        return " + loc.getRedirect().first << " " << loc.getRedirect().second << ";" << std::endl;
         std::cout << "        root " + loc.getRootPath() << ";" << std::endl;
         int method = loc.getMethods();
         std::cout << "        allow_methods ";

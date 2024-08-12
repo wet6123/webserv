@@ -18,6 +18,7 @@ namespace String
     std::vector<std::string> Split(const std::string &str, const std::string &delim, bool trim = false);
     std::string Format(std::string target, ...);
     std::string Itos(int n);
+    unsigned long ToUL(std::string str);
     class Reader;
 	class BinaryBuffer;
 }

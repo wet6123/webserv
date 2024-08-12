@@ -1,4 +1,7 @@
 #include "../Location.hpp"
+#include <functional>
+#include <iostream>
+#include <utility>
 
 LocationData makeLocationData(Dict dict) {
   LocationData data;
@@ -35,11 +38,15 @@ LocationData makeLocationData(Dict dict) {
     } else if (!key.compare("cgi-path")) {
       data.cgiPath = values[size++];
     } else if (!key.compare("return")) {
-      data.redirectPath = values[size++];
+      if (values.size() != 2)
+        ErrorLog::fatal("location redirect must have status code", __FILE__, __LINE__);
+      data.redirect = std::make_pair(values[0], (ushort)String::ToInt(values[1]));
+      size = values.size();
     } else if (!key.compare("root")) {
       data.rootPath = values[size++];
     } else if (!key.compare("index")) {
       data.idxPath = values[size++];
+      data.originalIdxPath = data.idxPath;
     } else {
       ErrorLog::fatal("wtf " + key + " location member variable", __FILE__, __LINE__);
     }
