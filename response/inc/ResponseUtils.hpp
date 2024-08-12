@@ -24,8 +24,10 @@ namespace ResponseHandle {
 		std::string getFormatSize(double size);
 		bool isValidPath(const std::string& path);
 		std::string getFileName(const std::string& filePath);
-		void setReasonPhrase();
 		extern std::map<Status, std::string> REASON_PHRASE;
+		extern std::map<std::string, std::string> CONTENT_TYPE;
+		void setReasonPhrase();
+		void setExtensionMap();
 	}
 }
 

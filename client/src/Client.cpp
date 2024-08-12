@@ -1,7 +1,10 @@
 #include "../inc/Client.hpp"
 #include "../../common/String.hpp"
 
-Client::Client(FD socket, const std::string &port) : _socket(socket), _port(port), _status(OK_200) {}
+Client::Client(FD socket, const std::string &port) : _socket(socket), _port(port), _status(OK_200)
+{
+	generateUserId(16);
+}
 
 Client::~Client()
 {
@@ -131,6 +134,8 @@ bool Client::isDone() const
 
 void Client::setTimeOut(time_t sec)
 {
+	_start = time(NULL);
+	_timeout = sec;
 	struct timeval tv;
 	tv.tv_sec = sec;
 	tv.tv_usec = 0;
@@ -154,4 +159,63 @@ int Client::receive(time_t timeout)
 int Client::receive(size_t size, time_t timeout) {
 	setTimeOut(timeout);
 	return receive(size);	
+}
+
+bool Client::isTimeout() const
+{
+	return time(NULL) - _start > _timeout;
+}
+
+void Client::generateUserId(size_t length)
+{
+	std::ifstream urandom("/dev/urandom", std::ios::in | std::ios::binary);
+	if (urandom.is_open())
+	{
+		unsigned int seed;
+		urandom.read(reinterpret_cast<char *>(&seed), sizeof(seed));
+		srand(seed);
+		urandom.close();
+	}
+	else
+	{
+		srand(static_cast<unsigned int>(time(NULL)) ^ static_cast<unsigned int>(getpid()));
+	}
+
+	const char set[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+	const size_t set_size = sizeof(set) - 1;
+	assert(set_size == 62);
+	std::string result;
+
+	for (size_t i = 0; i < length; i++)
+	{
+		result += set[rand() % set_size];
+	}
+
+	time_t now;
+
+	time(&now);
+	struct tm timeinfo;
+	localtime_r(&now, &timeinfo);
+	char buffer[80];
+	strftime(buffer, 80, "%Y-%m-%d %H:%M:%S", &timeinfo);
+
+	std::string combined = buffer + result;
+
+	// simple hash
+	size_t hash = 5381;
+	for (size_t i = 0; i < combined.size(); i++)
+	{
+		hash = ((hash << 5) + hash) + combined[i];
+	}
+
+ 	std::stringstream ss;
+
+	ss << std::hex << std::setw(16) << std::setfill('0') << hash;
+	_userId = ss.str();
+
+}
+
+std::string Client::getUserId() const
+{
+	return _userId;
 }

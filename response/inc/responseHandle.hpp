@@ -14,11 +14,11 @@
 
 namespace ResponseHandle {
 
-	void makeResponse(const Request& request, const std::string& port);
+	void makeResponse(const Request& request, const std::string& port, const std::string& userId);
 
 class Handler {
 public:
-    Handler(const Request& request, const std::string& port);
+    Handler(const Request& request, const std::string& port, const std::string& userId);
     void makeResponse();
 
 private:
@@ -41,7 +41,8 @@ private:
     std::string _query;
     std::string _pathInfo;
     std::string _scriptName;
-	std::string _port;
+	const std::string &_port;
+	const std::string &_userId;
 	RequestData _requestData;
 };
 

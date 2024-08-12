@@ -43,6 +43,10 @@ public:
 
 	void setBody(const std::string& body);
 
+	void setCookie(const std::string& name, const std::string& value, 
+                   time_t maxAge = 0, const std::string& path = "/", 
+                   bool httpOnly = true, bool secure = false );
+
 	const String::BinaryBuffer getResponses();
 	void	clearAll();
 

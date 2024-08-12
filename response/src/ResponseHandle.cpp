@@ -2,7 +2,7 @@
 
 namespace ResponseHandle {
 
-Handler::Handler(const Request &request, const std::string& port) : _request(request), _port(port)
+Handler::Handler(const Request &request, const std::string& port, const std::string& userId) : _request(request), _port(port), _userId(userId)
 {
 	requestInit();
 	ResponseHandle::Utils::setReasonPhrase();
@@ -47,8 +47,8 @@ void Handler::requestInit()
 	
 }
 
-void makeResponse(const Request &request, const std::string& port) {
-	Handler handler(request, port);
+void makeResponse(const Request &request, const std::string& port, const std::string& userId) {
+	Handler handler(request, port, userId);
 	LOG_DEBUG("Handler created");
 	handler.makeResponse();
 }
@@ -125,7 +125,7 @@ void Handler::initPathFromLocation() {
 			}
 			std::string tmpPath = _filePath + _location->getOriginalIdxPath();
 			tmpPath = ResponseHandle::Utils::normalizePath(tmpPath);
-			if (FileSystem::ExistDir(tmpPath) == true || FileSystem::Exist(tmpPath) == true) {
+			if (FileSystem::ExistDir(tmpPath) == true || FileSystem::ExistFile(tmpPath) == true) {
 				_filePath = tmpPath;
 				LOG_DEBUG("Handler::initPathFromLocation: File Path: " + _filePath);
 			}
@@ -133,7 +133,7 @@ void Handler::initPathFromLocation() {
 			throw NotFound_404;
 		}
 	} else {
-		if (FileSystem::ExistDir(_filePath) == false && FileSystem::Exist(_filePath) == false) {
+		if (FileSystem::ExistDir(_filePath) == false && FileSystem::ExistFile(_filePath) == false) {
 			_filePath = _filePath.substr(0, _filePath.find_last_of('/') + 1);
 		}
 	}
@@ -222,17 +222,19 @@ Response Handler::handleRedirect()
 String::BinaryBuffer Handler::handleGetRequest() {
 	LOG_DEBUG("Handler::handleGetRequest: Start");
 
-	if ((!_requestData.if_modified_since.empty() || !_requestData.if_none_match.empty()) && \
+	// If-Modified-Since 또는 If-None-Match 헤더 처리
+	if ((!_requestData.if_modified_since.empty() || !_requestData.if_none_match.empty()) &&
 		(_requestData.if_modified_since == Utils::lastModify(_filePath) || _requestData.if_none_match == Utils::etag(_filePath)))
 	{
-		_response.setStatusCode(NotModified_304);
+		_response.setStatusCode(NotModified_304); // Not Modified
 		_response.setHeader("Content-Length", "0");
 		_response.setHeader("Date", Utils::getCurTime());
 		_response.setHeader("Server", "42Webserv");
-		_response.setHeader("Connection", "close");
+		_response.setHeader("Connection", _requestData.connection);
 		return _response.getResponses();
 	}
 
+	// 리다이렉트 처리
 	if (!_location->getRedirect().first.empty())
 	{
 		LOG_DEBUG("Handler::handleGetRequest: Redirect");
@@ -241,45 +243,54 @@ String::BinaryBuffer Handler::handleGetRequest() {
 
 	std::string extension = Utils::getFileExtension(_filePath);
 	std::ifstream file(_filePath.c_str(), std::ios::binary);
-
-	if (file.is_open() && file.good() && FileSystem::ExistDir(_filePath) == false) {
+	if (file.is_open() && file.good() && !FileSystem::ExistDir(_filePath)) {
 		std::streamsize fileSize = FileSystem::GetFileSize(file);
-
 		const std::streamsize maxFileSize = _server.getBodySize();
-
 		if (fileSize > maxFileSize)
 		{
 			throw PayloadTooLarge_413;
 		}
 
 		String::BinaryBuffer body;
-
 		body.resize(fileSize);
-
 		file.read(&body[0], fileSize);
+		file.close();		
 
-		file.close();
-
-
-		if (body.size() != 0) {
-			_response.setStatusCode(OK_200);
-			_response.setHeader("Connection", "keep-alive");
+		if (!body.empty()) {
+			_response.setStatusCode(OK_200); // OK
+			_response.setHeader("Connection", _requestData.connection);
 			_response.setHeader("Server", "42Webserv");
 			_response.setHeader("Date", Utils::getCurTime());
 			_response.setHeader("Content-Type", Utils::getContentType(extension));
 			_response.setBody(body.str());
 			_response.setHeader("Content-Length", String::Itos(body.size()));
 		} else {
-			_response.setStatusCode(NoContent_204);
-			_response.setHeader("Connection", "keep-alive");
+			_response.setStatusCode(NoContent_204); // No Content
+			_response.setHeader("Connection", _requestData.connection);
 			_response.setHeader("Server", "42Webserv");
 			_response.setHeader("Date", Utils::getCurTime());
 			_response.setHeader("Content-Type", Utils::getContentType(extension));
 		}
+
 		_response.setHeader("Last-Modified", Utils::lastModify(_filePath));
 		_response.setHeader("ETag", Utils::etag(_filePath));
 		_response.setHeader("Cache-Control", "max-age=3600, public, must-revalidate, no-cache");
 		_response.setHeader("Expires", Utils::getExpirationTime(3600));
+		
+		// RequestData의 추가 필드 활용
+		if (!_requestData.accept_language.empty()) {
+			_response.setHeader("Content-Language", _requestData.accept_language);
+		} else {
+			_response.setHeader("Content-Language", "en-US");
+		}
+		
+		if (!_requestData.accept_encoding.empty()) {
+			_response.setHeader("Content-Encoding", _requestData.accept_encoding);
+		} else {
+			_response.setHeader("Content-Encoding", "identity");
+		}
+
+		_response.setHeader("Content-Disposition", "inline");
 	}
 	else {
 		if (FileSystem::ExistDir(_filePath))
@@ -291,12 +302,10 @@ String::BinaryBuffer Handler::handleGetRequest() {
 			{
 				throw Forbidden_403;
 			}
-
 		} else {
-			
 			if (_location->getIsAutoindex())
 			{
-				if (_location->getIsAutoindex() == false)
+				if (!_location->getIsAutoindex())
 				{
 					throw NotFound_404;
 				}
@@ -307,7 +316,23 @@ String::BinaryBuffer Handler::handleGetRequest() {
 			}
 		}
 	}
-	std::cout << "response : " << _response.getResponses() << std::endl;
+
+	std::string varyValue;
+    if (!_requestData.accept.empty()) {
+        varyValue += "Accept";
+    }
+    if (!_requestData.accept_encoding.empty()) {
+        if (!varyValue.empty()) varyValue += ", ";
+        varyValue += "Accept-Encoding";
+    }
+    if (!varyValue.empty()) {
+        _response.setHeader("Vary", varyValue);
+    }
+
+	LOG_DEBUG("Handler::handleGetRequest: Response prepared");
+	_response.setCookie("sessionId", "42Webserv");
+	_response.setCookie("user", _userId, 3600);
+	_response.setCookie("preferencesCookie", "theme=dark", 3600, "/");
 	return _response.getResponses();
 }
 
@@ -421,7 +446,7 @@ void Handler::handleAutoIndex(const std::string &servRoot)
 		_response.setHeader("Content-Type", "text/html");
 		_response.setBody(body.str());
 		_response.setHeader("Content-Length", String::Itos(body.str().length()));
-		_response.setHeader("Connection", "keep-alive");
+		_response.setHeader("Connection", _requestData.connection);
 	}
 }
 
