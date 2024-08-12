@@ -42,7 +42,6 @@ private:
     std::string _pathInfo;
     std::string _scriptName;
 	const std::string &_port;
-	const std::string &_userId;
 	RequestData _requestData;
 };
 
