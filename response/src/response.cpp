@@ -101,24 +101,3 @@ std::vector<std::string> Response::getHeaderValues(const std::string &name) cons
 	return values;
 }
 
-void Response::setCookie(const std::string& name, const std::string& value, 
-                   time_t maxAge = 0, const std::string& path = "/", 
-                   bool httpOnly = true, bool secure = false) {
-	std::string cookie = name + "=" + value;
-	
-	if (maxAge > 0) {
-		cookie += "; Max-Age=" + std::to_string(maxAge);
-	}
-	
-	cookie += "; Path=" + path;
-	
-	if (httpOnly) {
-		cookie += "; HttpOnly";
-	}
-	
-	if (secure) {
-		cookie += "; Secure";
-	}
-	
-	setHeader("Set-Cookie", cookie);
-}

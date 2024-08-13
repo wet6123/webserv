@@ -15,6 +15,13 @@ std::string getErrorResponse(Status status) {
 		response += reason;
 		return response;
 	}
+	std::string response = "HTTP/1.1 500 Internal Server Error\r\n";
+	response += "Content-Type: text/html\r\n";
+	response += "Content-Length: 21\r\n";
+	response += "Connection: close\r\n";
+	response += "\r\n";
+	response += "Internal Server Error";
+	return response;
 }
 
 }
