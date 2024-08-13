@@ -284,7 +284,7 @@ String::BinaryBuffer Handler::handleGetRequest() {
 
 		_response.setHeader("Last-Modified", Utils::lastModify(_filePath));
 		_response.setHeader("ETag", Utils::etag(_filePath));
-		_response.setHeader("Cache-Control", "max-age=3600, public, must-revalidate, no-cache");
+		_response.setHeader("Cache-Control", "public, max-age=3600");
 		_response.setHeader("Expires", Utils::getExpirationTime(3600));
 		
 		// RequestData의 추가 필드 활용
