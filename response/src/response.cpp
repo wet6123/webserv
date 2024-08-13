@@ -10,6 +10,11 @@ Response &Response::operator=(const Response &other)
 	if (this != &other)
 	{
 		_request = other._request;
+		_version = other._version;
+		_status = other._status;
+		_headers = other._headers;
+		_body = other._body;
+		_reason = other._reason;
 	}
 	return *this;
 }
