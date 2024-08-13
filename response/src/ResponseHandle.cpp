@@ -47,37 +47,52 @@ void Handler::requestInit()
 	
 }
 
-void makeResponse(const Request &request, const std::string& port) {
+String::BinaryBuffer makeResponse(const Request &request, const std::string& port) {
 	Handler handler(request, port);
 	LOG_DEBUG("Handler created");
-	handler.makeResponse();
+	String::BinaryBuffer result;
+	try {
+		result = handler.makeResponse();
+	} catch (const Status &status) {
+		result = ErrorResponse::getErrorResponse(status);
+	} catch (const std::exception &e) {
+		result = ErrorResponse::getErrorResponse(InternalServerError_500);
+	} catch (...) {
+		result = ErrorResponse::getErrorResponse(InternalServerError_500);
+	}
+	return result;
 }
 
-void Handler::makeResponse() {
+String::BinaryBuffer Handler::makeResponse() {
 	LOG_DEBUG("Handler::makeResponse: Start");
 	Method method = getMethodNum(_requestData.method);
 	LOG_DEBUG("Handler::makeResponse: Method: " + _requestData.method);
 	initPathFromLocation();
 	LOG_DEBUG("Handler::makeResponse: Path: " + _filePath);
-
+	String::BinaryBuffer response;
 	switch (method)
 	{
 	case GET:
-		handleGetRequest();
+		response = handleGetRequest();
 		break;
 	case POST:
-		handlePostRequest();
+		response = handlePostRequest();
 		break;
 	case DELETE:
-		handleDeleteRequest();
+		response = handleDeleteRequest();
 		break;
 	case PUT:
+		response = ErrorResponse::getErrorResponse(MethodNotAllowed_405);
 		break;
 	case HEAD:
+		response = ErrorResponse::getErrorResponse(MethodNotAllowed_405);
 		break;
 	default:
+		response = ErrorResponse::getErrorResponse(MethodNotAllowed_405);
 		break;
 	}
+	LOG_DEBUG("Handler::makeResponse: Response prepared");
+	return response;
 }
 
 void Handler::initPathFromLocation() {

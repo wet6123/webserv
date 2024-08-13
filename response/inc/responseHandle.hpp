@@ -5,6 +5,7 @@
 #include "../../common/Config.hpp"
 #include "../../request/inc/Request_struct.hpp"
 #include "../../common/FileSystem.hpp"
+#include "ErrorResponse.hpp"
 #include "ResponseUtils.hpp"
 #include <sys/stat.h>
 #include <sys/wait.h>
@@ -14,12 +15,12 @@
 
 namespace ResponseHandle {
 
-	void makeResponse(const Request& request, const std::string& port);
+	String::BinaryBuffer makeResponse(const Request& request, const std::string& port);
 
 class Handler {
 public:
     Handler(const Request& request, const std::string& port);
-    void makeResponse();
+	String::BinaryBuffer makeResponse();
 
 private:
 	void requestInit();
