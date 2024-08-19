@@ -167,5 +167,5 @@ bool Client::isTimeout() const
 
 bool Client::isKeepAlive() const
 {
-	return _request.getHeader("Connection") == "keep-alive";
+	return _request.getHeader("Connection") != "close";
 }

@@ -135,7 +135,8 @@ void Handler::initPathFromLocation() {
 	LOG_DEBUG("Handler::initPathFromLocation: Start");
 	_requestData.uri = Utils::normalizePath(_requestData.uri);
 	LOG_DEBUG("Handler::initPathFromLocation: URI: " + _requestData.uri);
-	_query = !_requestData.uri.find("?") ? _requestData.uri.substr(_requestData.uri.find("?") + 1) : "";
+	_query = _requestData.uri.find("?") != std::string::npos ? _requestData.uri.substr(_requestData.uri.find("?") + 1) : "";
+
 	LOG_DEBUG("Handler::initPathFromLocation: Query: " + _query);
 	_requestData.uri = _requestData.uri.substr(0, _requestData.uri.find("?"));
 	LOG_DEBUG("Handler::initPathFromLocation: URI: " + _requestData.uri);
@@ -387,16 +388,13 @@ String::BinaryBuffer Handler::handleGetRequest() {
 				throw Forbidden_403;
 			}
 		} else {
-			if (_location->getIsAutoindex())
+			if (!_location->getIsAutoindex())
 			{
-				if (!_location->getIsAutoindex())
-				{
-					throw NotFound_404;
-				}
-				else
-				{
-					handleAutoIndex(_filePath.substr(0, _filePath.find_last_of('/')));
-				}
+				throw NotFound_404;
+			}
+			else
+			{
+				handleAutoIndex(_filePath.substr(0, _filePath.find_last_of('/')));
 			}
 		}
 	}

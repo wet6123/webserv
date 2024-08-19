@@ -52,7 +52,7 @@ namespace ResponseHandle {
 		std::string etag(const std::string& filePath) {
 			struct stat fileStat;
 			if (stat(filePath.c_str(), &fileStat) == 0) {
-				std::string etag = std::to_string(fileStat.st_ino) + std::to_string(fileStat.st_size) + std::to_string(fileStat.st_mtime);
+				std::string etag = String::Itos(fileStat.st_ino) + String::Itos(fileStat.st_size) + String::Itos(fileStat.st_mtime);
 				return ResponseHandle::Utils::generateETag(etag);
 			}
 			return "";
