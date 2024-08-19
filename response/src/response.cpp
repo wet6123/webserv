@@ -58,6 +58,12 @@ void Response::setBody(const std::string &body) {
 	_body = body;
 }
 
+/**
+ * @brief Response Data를 반환
+ * @return Response Data
+ * @note Response Data를 반환합니다.
+*/
+
 const String::BinaryBuffer Response::getResponses() {
 	String::BinaryBuffer response;
 	std::map<Status, std::string>::iterator it = ResponseHandle::Utils::REASON_PHRASE.find(_status);

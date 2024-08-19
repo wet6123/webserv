@@ -4,6 +4,12 @@
 
 namespace ResponseHandle {
 	namespace Utils {
+		/**
+		 * @brief uri를 정규화합니다.
+		 * @param uri 정규화할 uri
+		 * @return std::string 정규화된 uri
+		 * @note uri에서 //를 /로 변경하고 ../를 제거합니다.
+		*/
 		std::string normalizePath(std::string uri) {
 			// remove double slash
 			LOG_DEBUG("uri: " + uri);
@@ -22,9 +28,11 @@ namespace ResponseHandle {
 			}
 			return uri;
 		}
-
-
-
+		/**
+		 * @brief 파일의 마지막 수정 시간을 반환합니다.
+		 * @param filePath 파일 경로
+		 * @return std::string 파일의 마지막 수정 시간
+		*/
 		std::string lastModify(const std::string& filePath) {
 			struct stat fileStat;
 			if (stat(filePath.c_str(), &fileStat) == 0) {
@@ -35,7 +43,12 @@ namespace ResponseHandle {
 			}
 			return "";
 		}
-
+		/**
+		 * @brief 파일의 etag를 반환합니다.
+		 * @param filePath 파일 경로
+		 * @return std::string 파일의 etag
+		 * @note 파일의 inode, 크기, 수정 시간을 이용하여 etag를 생성합니다.
+		*/
 		std::string etag(const std::string& filePath) {
 			struct stat fileStat;
 			if (stat(filePath.c_str(), &fileStat) == 0) {
@@ -44,7 +57,11 @@ namespace ResponseHandle {
 			}
 			return "";
 		}
-
+		/**
+		 * @brief content를 이용하여 etag를 생성합니다.
+		 * @param content etag를 생성할 content
+		 * @return std::string content를 이용하여 생성된 etag
+		*/
 		std::string generateETag(const std::string& content) {
 			unsigned long hash = 5381;
 			int c;
@@ -56,7 +73,10 @@ namespace ResponseHandle {
 			oss << "\"" << hash << "\"";
 			return oss.str();
 		}
-
+		/**
+		 * @brief 현재 시간을 반환합니다.
+		 * @return std::string 현재 시간
+		*/
 		std::string getCurTime() {
 			struct timeval tv;
 			struct tm *tm;
@@ -67,7 +87,11 @@ namespace ResponseHandle {
 			strftime(buf, sizeof(buf), "%a, %d %b %Y %H:%M:%S GMT", tm);
 			return std::string(buf);
 		}
-
+		/**
+		 * @brief time을 포맷팅하여 반환합니다.
+		 * @param time 포맷팅할 time
+		 * @return std::string 포맷팅된 time
+		*/
 		std::string getFormattedTime(time_t time)
 		{
 			char buffer[80];
@@ -75,7 +99,11 @@ namespace ResponseHandle {
 			strftime(buffer, 80, "%Y-%m-%d %H:%M:%S", timeinfo);
 			return std::string(buffer);
 		}
-
+		/**
+		 * @brief filePath의 확장자를 반환합니다.
+		 * @param filePath 확장자를 반환할 filePath
+		 * @return std::string filePath의 확장자
+		*/
 		std::string getFileExtension(const std::string &filePath)
 		{
 			size_t dotPos = filePath.find_last_of('.');
@@ -85,16 +113,22 @@ namespace ResponseHandle {
 			}
 			return "";
 		}
-
-		
-
+		/**
+		 * @brief seconds 후의 만료 시간을 반환합니다.
+		 * @param seconds 만료 시간
+		 * @return std::string seconds 후의 만료 시간
+		*/
 		std::string getExpirationTime(int seconds) {
 			std::time_t now = std::time(0) + seconds;
 			std::stringstream ss;
 			ss << std::put_time(std::gmtime(&now), "%a, %d %b %Y %H:%M:%S GMT");
 			return ss.str();
 		}
-
+		/**
+		 * @brief size를 포맷팅하여 반환합니다.
+		 * @param size 포맷팅할 size
+		 * @return std::string 포맷팅된 size
+		*/
 		std::string getFormatSize(double size)
 		{
 			const char *sizes[] = {"B", "KB", "MB", "GB", "TB"};
@@ -109,7 +143,12 @@ namespace ResponseHandle {
 			oss << std::fixed << std::setprecision(2) << size << sizes[i];
 			return oss.str();
 		}
-
+		/**
+		 * @brief path가 유효한지 확인합니다.
+		 * @param path 확인할 path
+		 * @return bool path가 유효하면 true, 그렇지 않으면 false
+		 * @note path가 비어있거나 PATH_MAX보다 길 경우, NULL 문자나 역슬래시가 포함되어 있을 경우 유효하지 않은 path로 판단합니다.
+		*/
 		bool isValidPath(const std::string &path)
 		{
 			if (path.empty())
@@ -215,7 +254,11 @@ namespace ResponseHandle {
 			CONTENT_TYPE.insert(std::pair<std::string, std::string>("pdf", "application/pdf"));
 			CONTENT_TYPE.insert(std::pair<std::string, std::string>("zip", "application/zip"));
 		}
-
+		/**
+		 * @brief extension에 해당하는 content type을 반환합니다.
+		 * @param extension content type을 반환할 extension
+		 * @return std::string extension에 해당하는 content type
+		*/
 		std::string getContentType(const std::string &extension)
 		{
 			if (CONTENT_TYPE.empty())

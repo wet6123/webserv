@@ -2,6 +2,11 @@
 
 namespace ErrorResponse {
 
+/** 
+ * @brief 에러 응답을 반환합니다.
+ * @param status 상태 코드
+ * @return std::string 에러 응답
+*/
 std::string getErrorResponse(Status status) {
 	std::map<Status, std::string>::iterator it = ResponseHandle::Utils::REASON_PHRASE.find(status);
 

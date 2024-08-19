@@ -1,7 +1,11 @@
 #include "../inc/ResponseHandle.hpp"
 
 namespace ResponseHandle {
-
+/**
+ * @brief Handler 생성자
+ * @param request 요청
+ * @param port 포트
+*/
 Handler::Handler(const Request &request, const std::string& port) : _request(request), _port(port)
 {
 	requestInit();
@@ -9,7 +13,15 @@ Handler::Handler(const Request &request, const std::string& port) : _request(req
 	_server = Config::getServer(_requestData.port);
 
 }
-
+/**
+ * @brief RequestData 초기화
+ * @note RequestData에 요청 헤더를 저장합니다.
+ * @note RequestData에 저장되는 헤더는 다음과 같습니다.
+ * @note Method, URI, Version, Host, Port, IP, User-Agent, Referer, Accept, Accept-Charset, Accept-Language, Accept-Encoding, If-Modified-Since, If-None-Match, Authorization, Origin, Cookie, Date, Cache-Control, Connection, Transfer-Encoding, Content-Type, Content-Length, Content-Language, Content-Location, Content-Disposition, Content-Encoding, Last-Modified, Allow, ETag, Expires
+ * @note 헤더가 존재하지 않을 경우 빈 문자열로 저장됩니다.
+ * @note _request.getHeader("헤더 이름")을 통해 헤더 값을 가져올 수 있습니다.
+ * 
+*/
 void Handler::requestInit()
 {
 	
@@ -46,7 +58,14 @@ void Handler::requestInit()
 	_requestData.expires = _request.getHeader("Expires");
 	
 }
-
+/**
+ * @brief 응답 생성
+ * @param request 요청
+ * @param port 포트
+ * @return String::BinaryBuffer 응답
+ * @note 요청에 대한 응답을 생성합니다.
+ * @note handler.makeResponse()를 통해 응답을 생성합니다.
+*/
 String::BinaryBuffer makeResponse(const Request &request, const std::string& port) {
 	Handler handler(request, port);
 	LOG_DEBUG("Handler created");
@@ -62,7 +81,19 @@ String::BinaryBuffer makeResponse(const Request &request, const std::string& por
 	}
 	return result;
 }
-
+/**
+ * @brief 응답 생성
+ * @return String::BinaryBuffer 응답
+ * @note 요청에 대한 응답을 생성합니다.
+ * @note function getMethodNum()를 통해 요청 메소드를 확인합니다.
+ * @note function initPathFromLocation()를 통해 파일 경로를 설정합니다.
+ * @note function getFilePath()를 통해 파일 경로를 가져옵니다.
+ * @note function handleGetRequest()를 통해 GET 요청을 처리합니다.
+ * @note function handlePostRequest()를 통해 POST 요청을 처리합니다.
+ * @note function handleDeleteRequest()를 통해 DELETE 요청을 처리합니다.
+ * @note function handleRedirect()를 통해 리다이렉트를 처리합니다.
+ * @note function handleAutoIndex()를 통해 자동 인덱스를 처리합니다.
+*/
 String::BinaryBuffer Handler::makeResponse() {
 	LOG_DEBUG("Handler::makeResponse: Start");
 	Method method = getMethodNum(_requestData.method);
@@ -94,7 +125,12 @@ String::BinaryBuffer Handler::makeResponse() {
 	LOG_DEBUG("Handler::makeResponse: Response prepared");
 	return response;
 }
-
+/**
+ * @brief 파일 경로 설정
+ * @note 요청 URI를 통해 파일 경로를 설정합니다.
+ * @note 파일 경로가 설정되지 않은 경우 500 에러를 반환합니다.
+ * @note 경로가 유효하지 않은 경우 400 에러를 반환합니다.
+*/
 void Handler::initPathFromLocation() {
 	LOG_DEBUG("Handler::initPathFromLocation: Start");
 	_requestData.uri = Utils::normalizePath(_requestData.uri);
@@ -209,17 +245,25 @@ std::string Handler::getFilePath(const std::string& uri) {
 
 	return filePath;
 }
-
-
+/**
+ * @brief 리다이렉트 처리
+ * @return Response 리다이렉트 응답
+ * @note 리다이렉트 응답을 생성합니다.
+ * @note 리다이렉트 URL이 설정되지 않은 경우 200 응답을 반환합니다.
+ * @note 리다이렉트 응답은 301, 302, 303, 307, 308 상태 코드를 반환합니다.
+*/
 Response Handler::handleRedirect()
 {
 	Response response;
 	Status returnCode = static_cast<Status>(_location->getRedirect().second);
+	if (returnCode != MovedPermanently_301 && returnCode != Found_302 && returnCode != SeeOther_303 && returnCode != TemporaryRedirect_307 && returnCode != PermanentRedirect_308)
+	{
+		returnCode = MovedPermanently_301;
+	}
 	std::string returnUrl = _location->getRedirect().first;
 
 	if (!returnUrl.empty())
 	{
-		// int statusCode = std::stoi(returnCode);
 		response.setRedirect(returnUrl, returnCode);
 		
 		response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
@@ -233,7 +277,22 @@ Response Handler::handleRedirect()
 	response.setStatusCode(OK_200);
 	return response;
 }
-
+/**
+ * @brief GET 요청 처리
+ * @return String::BinaryBuffer GET 응답
+ * @note GET 요청에 대한 응답을 생성합니다.
+ * @note If-Modified-Since 또는 If-None-Match 헤더가 존재하는 경우 304 응답을 반환합니다.
+ * @note 리다이렉트가 설정된 경우 리다이렉트 응답을 반환합니다.
+ * @note 파일이 존재하지 않는 경우 404 응답을 반환합니다.
+ * @note 로직 순서는 다음과 같습니다
+ * 1. etag가 우선순위가 높기 때문에 etag를 확인합니다.
+ * 2. If-Modified-Since 헤더를 확인합니다.
+ * 3. 리다이렉트 처리
+ * 4. 파일이 존재하지 않는 경우 404 응답을 반환합니다.
+ * 5. 파일이 존재하는 경우 응답을 생성합니다.
+ * 6. 응답 헤더를 설정합니다.
+ * 
+*/
 String::BinaryBuffer Handler::handleGetRequest() {
 	LOG_DEBUG("Handler::handleGetRequest: Start");
 
