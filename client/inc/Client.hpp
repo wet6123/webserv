@@ -12,6 +12,7 @@
 #include "../../common/Define.hpp"
 #include "../../request/inc/Request.hpp"
 #include "../../common/String.hpp"
+#include "../../response/inc/ResponseHandle.hpp"
 
 class Client : public IClient
 {
@@ -31,6 +32,7 @@ public:
 	void setTimeOut(time_t sec);
 	void setTimeOutSend(time_t sec);
 	bool isDone() const;
+	bool isClientFD(FD fd) const;
 	bool isTimeout() const;
 	bool isKeepAlive() const;
 
@@ -51,6 +53,7 @@ private:
 	FD _socket;
 	PORT _port;
 	Request _request;
+	BinaryBuffer _response;
 	Status _status;
 	time_t _start;
 	time_t _timeout;
