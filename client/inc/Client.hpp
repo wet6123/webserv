@@ -5,6 +5,9 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <vector>
+#include <cstdlib>
+#include <ctime>
+#include <assert.h>
 #include "../../common/ErrorLog.hpp"
 #include "../../common/Define.hpp"
 #include "../../request/inc/Request.hpp"
@@ -28,6 +31,8 @@ public:
 	void setTimeOut(time_t sec);
 	void setTimeOutSend(time_t sec);
 	bool isDone() const;
+	bool isTimeout() const;
+	bool isKeepAlive() const;
 
 	class ClientException : public std::exception
 	{
@@ -38,7 +43,7 @@ public:
 	private:
 		std::string _message;
 	};
-	
+
 private:
 	typedef String::BinaryBuffer BinaryBuffer;
 	Client();
@@ -47,6 +52,9 @@ private:
 	PORT _port;
 	Request _request;
 	Status _status;
+	time_t _start;
+	time_t _timeout;
+	std::string _userId;
 };
 
 #endif

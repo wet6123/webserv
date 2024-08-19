@@ -7,6 +7,7 @@ CXX		= c++
 SRC_DIRS = client/src \
            request/src \
            socket/src \
+		   response/src \
            common
 # ===============================================
 # Source Files
@@ -18,6 +19,7 @@ SRCS = $(foreach dir,$(SRC_DIRS),$(shell find $(dir) -name "*.cpp" -and -not -na
 HEAD_DIRS = client/inc \
 			request/inc \
 			socket/inc \
+			response/inc \
 			common \
 
 MAIN_SRC = test.cpp
