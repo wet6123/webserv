@@ -1,7 +1,9 @@
 #include "../inc/Client.hpp"
 #include "../../common/String.hpp"
 
-Client::Client(FD socket, const std::string &port) : _socket(socket), _port(port), _status(OK_200) {}
+Client::Client(FD socket, const std::string &port) : _socket(socket), _port(port), _status(OK_200)
+{
+}
 
 Client::~Client()
 {
@@ -131,6 +133,8 @@ bool Client::isDone() const
 
 void Client::setTimeOut(time_t sec)
 {
+	_start = time(NULL);
+	_timeout = sec;
 	struct timeval tv;
 	tv.tv_sec = sec;
 	tv.tv_usec = 0;
@@ -154,4 +158,14 @@ int Client::receive(time_t timeout)
 int Client::receive(size_t size, time_t timeout) {
 	setTimeOut(timeout);
 	return receive(size);	
+}
+
+bool Client::isTimeout() const
+{
+	return time(NULL) - _start > _timeout;
+}
+
+bool Client::isKeepAlive() const
+{
+	return _request.getHeader("Connection") != "close";
 }

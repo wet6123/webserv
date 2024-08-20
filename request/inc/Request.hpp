@@ -1,10 +1,12 @@
+#ifndef REQUEST_HPP
+#define REQUEST_HPP
+
 #include <iostream>
 #include <map>
 #include <fstream>
 #include <sstream>
 #include <string>
 
-#include "Request_struct.hpp"
 #include "../../common/String.hpp"
 #include "../../common/ErrorLog.hpp"
 #include "../../common/Define.hpp"
@@ -52,3 +54,5 @@ private:
 	bool parseBody();
 	bool parseChunkedBody();
 };
+
+#endif

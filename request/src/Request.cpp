@@ -127,7 +127,12 @@ bool Request::parseHeaders() {
 	while (_state == HEADERS && !_buffer.empty()) {
 		BinaryBuffer line = _buffer.readLine();
 
-		if (line[line.size() - 1] != '\r') {
+		if (line.size() < 2) {
+			continue;
+		}
+
+		if (line.size() > 1 && line[line.size() - 2] != '\r') {
+			LOG_ERROR("Request::parseHeaders: Invalid request header format.");
 			throw BadRequest_400;
 		}
 
@@ -219,8 +224,8 @@ void Request::parseRequestHeader(const std::string& line) {
 	std::string key = line.substr(0, pos);
 	std::string value = line.substr(pos + 1);
 
-	String::Trim(key);
-	String::Trim(value);
+	key = String::Trim(key);
+	value = String::Trim(value);
 
 	if (key.empty() || value.empty()) {
 		LOG_ERROR("Request::parseRequestHeader: Invalid request header format.");
