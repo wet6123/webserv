@@ -36,9 +36,9 @@ namespace ResponseHandle {
 		std::string lastModify(const std::string& filePath) {
 			struct stat fileStat;
 			if (stat(filePath.c_str(), &fileStat) == 0) {
-				std::time_t lastModifiedTime = fileStat.st_mtime;
+				// std::time_t lastModifiedTime = fileStat.st_mtime;
 				std::stringstream ss;
-				ss << std::put_time(std::gmtime(&lastModifiedTime), "%a, %d %b %Y %H:%M:%S GMT");
+				// ss << std::put_time(std::gmtime(&lastModifiedTime), "%a, %d %b %Y %H:%M:%S GMT");
 				return ss.str();
 			}
 			return "";
@@ -119,9 +119,10 @@ namespace ResponseHandle {
 		 * @return std::string seconds 후의 만료 시간
 		*/
 		std::string getExpirationTime(int seconds) {
-			std::time_t now = std::time(0) + seconds;
+			// std::time_t now = std::time(0) + seconds;
 			std::stringstream ss;
-			ss << std::put_time(std::gmtime(&now), "%a, %d %b %Y %H:%M:%S GMT");
+			(void)seconds;
+			// ss << std::put_time(std::gmtime(&now), "%a, %d %b %Y %H:%M:%S GMT");
 			return ss.str();
 		}
 		/**
@@ -155,7 +156,8 @@ namespace ResponseHandle {
 			{
 				return false;
 			}
-			if (path.length() > PATH_MAX)
+			// if (path.length() > PATH_MAX)
+			if (path.length() > 100)
 			{
 				return false;
 			}

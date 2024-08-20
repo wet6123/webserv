@@ -236,7 +236,7 @@ std::string Handler::getFilePath(const std::string& uri) {
 
 	// 경로 정규화 및 최종 확인
 	filePath = ResponseHandle::Utils::normalizePath(filePath);
-	if (FileSystem::ExistDir(filePath) && filePath.back() != '/') {
+	if (FileSystem::ExistDir(filePath) && filePath[filePath.length() - 1] != '/') {
 		filePath += "/";
 	}
 

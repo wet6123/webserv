@@ -14,7 +14,7 @@ namespace Config {
   void init(std::string path);
   void printConfig();
   std::vector<Server> getServers();
-  Server getServer(std::string port);
+  const Server& getServer(std::string port);
 }
 
 #endif
