@@ -1,5 +1,4 @@
 #include "../inc/Client.hpp"
-#include "../../common/String.hpp"
 
 Client::Client(FD socket, const std::string &port) : _socket(socket), _port(port), _status(OK_200)
 {
@@ -7,6 +6,7 @@ Client::Client(FD socket, const std::string &port) : _socket(socket), _port(port
 
 Client::~Client()
 {
+	// client manager에서 clientlist에 저장할 때 소멸자를 호출해서 fd가 닫히는거였음
 	close();
 }
 
@@ -42,11 +42,12 @@ void Client::close()
 */
 int Client::send()
 {
-	std::string data;
+	_response = ResponseHandle::makeResponse(_request, _port);
+	std::cout << "response: " << _response << std::endl;
 	int bytes = 0;
 	if (_socket != -1)
 	{
-		bytes = ::send(_socket, data.c_str(), data.size(), MSG_NOSIGNAL);
+		bytes = ::send(_socket, _response.c_str(), _response.size(), MSG_NOSIGNAL);
 		if (bytes == -1)
 		{
 			throw ClientException("Failed to send data");
@@ -129,6 +130,11 @@ int Client::receive()
 bool Client::isDone() const
 {
 	return _request.isDone();
+}
+
+bool Client::isClientFD(FD fd) const
+{
+	return _socket == fd;
 }
 
 void Client::setTimeOut(time_t sec)

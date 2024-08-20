@@ -369,11 +369,11 @@ String::BinaryBuffer Handler::handleGetRequest() {
 			_response.setHeader("Content-Language", "en-US");
 		}
 		
-		if (!_requestData.accept_encoding.empty()) {
-			_response.setHeader("Content-Encoding", _requestData.accept_encoding);
-		} else {
-			_response.setHeader("Content-Encoding", "identity");
-		}
+		// if (!_requestData.accept_encoding.empty()) {
+		// 	_response.setHeader("Content-Encoding", _requestData.accept_encoding);
+		// } else {
+		// 	_response.setHeader("Content-Encoding", "identity");
+		// }
 
 		_response.setHeader("Content-Disposition", "inline");
 	}

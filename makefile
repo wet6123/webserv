@@ -8,7 +8,8 @@ SRC_DIRS = client/src \
            request/src \
            socket/src \
 		   response/src \
-           common
+           common \
+					 server/src \
 # ===============================================
 # Source Files
 # ===============================================
@@ -21,8 +22,9 @@ HEAD_DIRS = client/inc \
 			socket/inc \
 			response/inc \
 			common \
+			server/inc \
 
-MAIN_SRC = test.cpp
+MAIN_SRC = main.cpp
 MAIN_OBJ = $(MAIN_SRC:.cpp=.o)
 
 SRC_CUR	= $(addsuffix , $(SRCS))
