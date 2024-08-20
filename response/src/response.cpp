@@ -3,13 +3,18 @@
 Response::Response() : _version("HTTP/1.1"), _status(OK_200)  {}
 
 
-Response::Response(const Response &other) : _request(other._request) {}
+Response::Response(const Response &other) {
+	_version = other._version;
+	_status = other._status;
+	_headers = other._headers;
+	_body = other._body;
+	_reason = other._reason;
+}
 
 Response &Response::operator=(const Response &other)
 {
 	if (this != &other)
 	{
-		_request = other._request;
 		_version = other._version;
 		_status = other._status;
 		_headers = other._headers;

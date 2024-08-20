@@ -1,6 +1,6 @@
 #include "../inc/Client.hpp"
 
-Client::Client(FD socket, const std::string &port) : _socket(socket), _port(port), _status(OK_200)
+Client::Client(FD socket, const std::string &port) : _socket(socket), _port(port), _request(port), _status(OK_200)
 {
 }
 
@@ -42,7 +42,12 @@ void Client::close()
 */
 int Client::send()
 {
-	_response = ResponseHandle::makeResponse(_request, _port);
+	if (_status != OK_200)
+	{
+		_response = ErrorResponse::getErrorResponse(_status);
+	} else {
+		_response = ResponseHandle::makeResponse(_request, _port);
+	}
 	std::cout << "response: " << _response << std::endl;
 	int bytes = 0;
 	if (_socket != -1)
@@ -106,8 +111,8 @@ int Client::receive()
 	}
 	if (bytes == 0)
 	{
-		LOG_DEBUG("Client disconnected");
-		throw ClientException("Client disconnected");
+		// LOG_DEBUG("Client disconnected");
+		// throw ClientException("Client disconnected");
 	}
 	if (_status != OK_200) {
     	LOG_DEBUG("Request processing halted due to previous error: " + String::Itos(_status));
@@ -173,5 +178,5 @@ bool Client::isTimeout() const
 
 bool Client::isKeepAlive() const
 {
-	return _request.getHeader("Connection") != "close";
+	return _response.str().find("Connection: keep-alive") != std::string::npos;
 }

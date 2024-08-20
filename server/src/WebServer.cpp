@@ -125,10 +125,12 @@ void WebServer::run()
           LOG_DEBUG("byte write: " + std::to_string(byte));
           
           if (client_manager.isKeepAlive(current_event->ident)) {
+			LOG_INFO("Keep Alive");
             addChangeList(current_event->ident, EVFILT_WRITE, EV_DISABLE, 0, 0, NULL);
             addChangeList(current_event->ident, EVFILT_READ, EV_ENABLE, 0, 0, NULL);
           }
           else {
+			LOG_INFO("Close");
             client_manager.closeClient(current_event->ident);
           }
         }

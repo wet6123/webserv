@@ -132,7 +132,7 @@ namespace Config {
         std::cout << "        index " + loc.getOriginalIdxPath() << ";" << std::endl;
         std::cout << "        autoindex " + (std::string)(loc.getIsAutoindex() ? "on" : "off") << ";" << std::endl;
         std::cout << "        cgi-path " + loc.getCgiPath() << ";" << std::endl;
-        std::cout << "        return " + loc.getRedirect().first << " " << loc.getRedirect().second << ";" << std::endl;
+        std::cout << "        return " + loc.getRedirect().second << " " << loc.getRedirect().second << ";" << std::endl;
         std::cout << "        root " + loc.getRootPath() << ";" << std::endl;
         int method = loc.getMethods();
         std::cout << "        allow_methods ";

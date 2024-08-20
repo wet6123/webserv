@@ -29,6 +29,7 @@ private:
     String::BinaryBuffer handleGetRequest();
     String::BinaryBuffer handleDeleteRequest();
     String::BinaryBuffer handlePostRequest();
+	String::BinaryBuffer handleDownloadRequest();
     void handleAutoIndex(const std::string& servRoot);
     void initPathFromLocation();
     Method getMethodNum(const std::string& method);

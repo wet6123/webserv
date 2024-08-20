@@ -12,16 +12,13 @@ namespace ResponseHandle {
 		*/
 		std::string normalizePath(std::string uri) {
 			// remove double slash
-			LOG_DEBUG("uri: " + uri);
 			while (uri.find("//") != std::string::npos) {
 				uri.replace(uri.find("//"), 2, "/");
 			}
-			LOG_DEBUG("uri: " + uri);
 			// remove ../
 			while (uri.find("../") != std::string::npos) {
 				uri.replace(uri.find("../"), 3, "");
 			}
-			LOG_DEBUG("uri: " + uri);
 			// remove /./
 			while (uri.find("/./") != std::string::npos) {
 				uri.replace(uri.find("/./"), 3, "/");

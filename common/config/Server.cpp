@@ -64,7 +64,9 @@ Location* getPreFixMatch(std::string path, std::vector<Location> locations) {
     }
     if (cnt > maxCntOfMatch){
       maxCntOfMatch = cnt;
-      ret = (Location *)&it;
+      ret = (Location *)&(*it);
+	  LOG_DEBUG(ret->getUriPath());
+	  LOG_DEBUG("Prefix match found");
     }
   }
   return ret;
@@ -84,20 +86,36 @@ Location* Server::getLocation(std::string path) const {
 // 완전 매칭
     if (!uri.compare(path)) {
     //   std::cout << &(*it) << std::endl;
+		LOG_DEBUG("Exact match found");
       return (Location *)&(*it);
     } 
     else if (!uri.compare("/")) // 기본 매칭
+	{
       defaultMatch = (Location *)&(*it);
-    else if (it->getIsRegex() && !fileExtension.compare(uriFileExtension)) // 정규 표현식 매칭
-      regexMatch = (Location *)&(*it);
+	  LOG_DEBUG("Default match found");
+	}
+    else if (it->getIsRegex() && !fileExtension.compare(uriFileExtension)) // 정규 표현식 매칭 
+	{
+		regexMatch = (Location *)&(*it);
+		LOG_ERROR("Regex match found");
+	}
+      
   }
   Location* prefixMatch = getPreFixMatch(path, locations);
-  if (defaultMatch != NULL)
+  if (defaultMatch != NULL) {
     ret = defaultMatch;
-  if (prefixMatch != NULL)
+	LOG_DEBUG(defaultMatch->getUriPath() + " is the final match");
+  }
+  if (prefixMatch != NULL) {
     ret = prefixMatch;
-  if (regexMatch != NULL)
+	LOG_DEBUG(prefixMatch->getUriPath() + " is the final match");
+	LOG_DEBUG(ret->getUriPath() + " is the final match");
+  }
+  if (regexMatch != NULL) {
+
     ret = regexMatch;
+	LOG_DEBUG(ret->getUriPath() + " is the final match");
+  }
   return ret;
 }
 

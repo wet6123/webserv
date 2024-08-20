@@ -1,7 +1,14 @@
 #include "../inc/Request.hpp"
+#include "../../common/Config.hpp"
 
-Request::Request() : _state(HEADERS), _contentLength(0), _maxRequestSize(10 * 1024 * 1024), _maxBodySize(10 * 1024 * 1024) {
+Request::Request(PORT port) : _port(port), _state(HEADERS), _contentLength(0), _maxRequestSize(10 * 1024 * 1024)  {
 	_buffer.reserve(1024);
+	Server tmp = Config::getServer(port);
+	if (tmp.getName() == "") {
+		LOG_ERROR("Request::Request: Server not found.");
+		throw NotFound_404;
+	}
+	_maxBodySize = Config::getServer(port).getBodySize();
 }
 
 Request::Request(const Request& other) : _state(other._state), _contentLength(other._contentLength), _maxRequestSize(other._maxRequestSize), _maxBodySize(other._maxBodySize) {
@@ -84,6 +91,7 @@ void Request::clearHeaders() {
  * @note Request Data를 파싱하여 Request Data, Header, Body를 추출
 */
 void Request::parseBufferedData(const BinaryBuffer& buffer) {
+	LOG_DEBUG(buffer.str());
 	LOG_DEBUG("Request::parseBufferedData: Parsing request data.");
 	if (_buffer.size() + buffer.size() > _maxRequestSize) {
 		LOG_ERROR("Request::parseBufferedData: Request size exceeds maximum size.");
@@ -203,7 +211,6 @@ void Request::parseRequestLine(const std::string& line) {
 		LOG_ERROR("Request::parseRequestLine: Request URI exceeds maximum size.");
 		throw UriTooLong_414;
 	}
-
 	setHeader("Method", method);
 	setHeader("URI", uri);
 	setHeader("Version", version);
@@ -247,6 +254,7 @@ void Request::parseRequestHeader(const std::string& line) {
 */
 bool Request::parseBody() {
 	if (_contentLength > _maxBodySize) {
+
 		LOG_ERROR("Request::parseBody: Request body size exceeds maximum size.");
 		throw PayloadTooLarge_413;
 	}
@@ -299,4 +307,8 @@ void Request::clear() {
 	_headers.clear();
 	_buffer.clear();
 	_body.clear();
+}
+
+PORT Request::getPort() const {
+	return _port;
 }

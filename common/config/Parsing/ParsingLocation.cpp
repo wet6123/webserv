@@ -40,7 +40,7 @@ LocationData makeLocationData(Dict dict) {
     } else if (!key.compare("return")) {
       if (values.size() != 2)
         ErrorLog::fatal("location redirect must have status code", __FILE__, __LINE__);
-      data.redirect = std::make_pair(values[0], (ushort)String::ToInt(values[1]));
+      data.redirect = std::make_pair((ushort)String::ToInt(values[0]), values[1]);
       size = values.size();
     } else if (!key.compare("root")) {
       data.rootPath = values[size++];
