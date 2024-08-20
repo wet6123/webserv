@@ -108,6 +108,7 @@ void Request::parseBufferedData(const BinaryBuffer& buffer) {
 			{
 			case HEADERS:
 				continueParsing = parseHeaders();
+				LOG_DEBUG("Request::parseBufferedData: Request parsing complete.");
 				break;
 			case BODY:
 				continueParsing = parseBody();
@@ -123,12 +124,15 @@ void Request::parseBufferedData(const BinaryBuffer& buffer) {
 			}
 		}
 	} catch (std::exception& e) {
+		LOG_DEBUG("Request::parseBufferedData: Request parsing complete.");
 		_state = DONE;
 	} catch (const Status &e) {
+		LOG_DEBUG("Request::parseBufferedData: Request parsing complete.");
 		std::cout << "Error parsing request: " << String::Itos(e) << std::endl;
 		_state = DONE;
 		throw e;
 	}
+	LOG_DEBUG("Request::parseBufferedData: Request parsing complete.");
 }
 /**
  * @brief 헤더 파싱
@@ -138,17 +142,12 @@ bool Request::parseHeaders() {
 	while (_state == HEADERS && !_buffer.empty()) {
 		BinaryBuffer line = _buffer.readLine();
 
-		if (line.size() < 2) {
-			continue;
-		}
-
-		if (line.size() > 1 && line[line.size() - 2] != '\r') {
-			LOG_ERROR("Request::parseHeaders: Invalid request header format.");
-			throw BadRequest_400;
-		}
-
 		if (line.empty()) {
 			return false;
+		}
+
+		if (line.size() < 2) {
+			continue;
 		}
 
 		if (line == "\r\n") {

@@ -103,8 +103,8 @@ int Client::receive(size_t size)
 
 int Client::receive()
 {
-	char buffer[BUFFER_SIZE];
-	int bytes = ::recv(_socket, buffer, BUFFER_SIZE,  MSG_NOSIGNAL);
+	char buffer[10];
+	int bytes = ::recv(_socket, buffer, 10,  MSG_NOSIGNAL);
 	if (bytes == -1)
 	{
 		return -1;
