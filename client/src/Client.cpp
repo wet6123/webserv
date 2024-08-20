@@ -44,7 +44,7 @@ int Client::send()
 {
 	if (_status != OK_200)
 	{
-		_response = ErrorResponse::getErrorResponse(_status);
+		_response = ErrorResponse::getErrorResponse(_status, _port);
 	} else {
 		_response = ResponseHandle::makeResponse(_request, _port);
 	}
@@ -87,12 +87,12 @@ int Client::receive(size_t size)
     	LOG_DEBUG("Request processing halted due to previous error: " + String::Itos(_status));
     	return bytes;
 	}
-	
 	try {
 	    _request.parseBufferedData(std::string(buffer, bytes));
 	} catch (const Status& e) {
-		_request.clear();
+		// _request.clear();
 		_status = e;
+		LOG_FATAL("Error parsing request: " + String::Itos(e));
 	} catch (const std::exception& e) {
 		LOG_ERROR("Unexpected error during parsing: " + std::string(e.what()));
 		_request.clear();
@@ -122,7 +122,7 @@ int Client::receive()
 	try {
 	    _request.parseBufferedData(std::string(buffer, bytes));
 	} catch (const Status& e) {
-		_request.clear();
+		// _request.clear();
 		_status = e;
 	} catch (const std::exception& e) {
 		LOG_ERROR("Unexpected error during parsing: " + std::string(e.what()));
@@ -134,6 +134,7 @@ int Client::receive()
 
 bool Client::isDone() const
 {
+	std::cout << "isDone: " << _request.isDone() << std::endl;
 	return _request.isDone();
 }
 

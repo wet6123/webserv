@@ -6,7 +6,7 @@
 #include <string>
 #include <cstring>
 #include "../FileSystem.hpp"
-
+#include "../String.hpp"
 
 
 namespace FileSystem {
@@ -23,8 +23,10 @@ namespace FileSystem {
 		struct passwd *pw = getpwuid(info.st_uid);
 		struct group  *gr = getgrgid(info.st_gid);
 
-		folderInfo.owner = pw ? pw->pw_name : std::to_string(info.st_uid);
-		folderInfo.group = gr ? gr->gr_name : std::to_string(info.st_gid);
+		// folderInfo.owner = pw ? pw->pw_name : std::to_string(info.st_uid);
+		folderInfo.owner = pw ? pw->pw_name : String::Itos(info.st_uid);
+		// folderInfo.group = gr ? gr->gr_name : std::to_string(info.st_gid);
+		folderInfo.group = gr ? gr->gr_name : String::Itos(info.st_gid);
 		folderInfo.permissions = info.st_mode & 0777;  // 8진수로 권한 표시
 
 		return folderInfo;

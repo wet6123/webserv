@@ -9,7 +9,6 @@ namespace ResponseHandle {
 Handler::Handler(const Request &request, const std::string& port) : _request(request), _port(port)
 {
 	requestInit();
-	ResponseHandle::Utils::setReasonPhrase();
 	_server = Config::getServer(_requestData.port);
 
 }
@@ -73,11 +72,11 @@ String::BinaryBuffer makeResponse(const Request &request, const std::string& por
 	try {
 		result = handler.makeResponse();
 	} catch (const Status &status) {
-		result = ErrorResponse::getErrorResponse(status);
+		result = ErrorResponse::getErrorResponse(status, port);
 	} catch (const std::exception &e) {
-		result = ErrorResponse::getErrorResponse(InternalServerError_500);
+		result = ErrorResponse::getErrorResponse(InternalServerError_500, port);
 	} catch (...) {
-		result = ErrorResponse::getErrorResponse(InternalServerError_500);
+		result = ErrorResponse::getErrorResponse(InternalServerError_500, port);
 	}
 	return result;
 }
@@ -113,13 +112,13 @@ String::BinaryBuffer Handler::makeResponse() {
 		response = handleDeleteRequest();
 		break;
 	case PUT:
-		response = ErrorResponse::getErrorResponse(MethodNotAllowed_405);
+		response = ErrorResponse::getErrorResponse(MethodNotAllowed_405, _port);
 		break;
 	case HEAD:
-		response = ErrorResponse::getErrorResponse(MethodNotAllowed_405);
+		response = ErrorResponse::getErrorResponse(MethodNotAllowed_405, _port);
 		break;
 	default:
-		response = ErrorResponse::getErrorResponse(MethodNotAllowed_405);
+		response = ErrorResponse::getErrorResponse(MethodNotAllowed_405, _port);
 		break;
 	}
 	LOG_DEBUG("Handler::makeResponse: Response prepared");
@@ -145,13 +144,14 @@ void Handler::initPathFromLocation() {
 		throw InternalServerError_500;
 	}
 
-
-	_location = _server.getLocation(_requestData.uri);
-	if (!_location)
-	{
-		throw NotFound_404;
+	try {
+		_location = _server.getLocation(_requestData.uri);
 	}
-	LOG_DEBUG("Handler::initPathFromLocation: Location: " + _location->getUriPath());
+	catch (const Status &status) {
+		throw status;
+	}
+	
+	LOG_DEBUG("Handler::initPathFromLocation: Location: " + _location.getUriPath());
 
 	_filePath = getFilePath(_requestData.uri);
 	if (_filePath.empty())
@@ -170,8 +170,9 @@ void Handler::initPathFromLocation() {
 			if (dir == NULL && errno == EACCES) {
 				throw Forbidden_403;
 			}
-			std::string tmpPath = _filePath + _location->getOriginalIdxPath();
-			LOG_DEBUG("Handler::initPathFromLocation: Index path: " + tmpPath);
+			LOG_DEBUG(_location.getOriginalIdxPath());
+			std::string idxPath = _location.getOriginalIdxPath().empty() ? _server.getIdxPath() : _location.getOriginalIdxPath();
+			std::string tmpPath = _filePath + idxPath;
 			tmpPath = ResponseHandle::Utils::normalizePath(tmpPath);
 			LOG_DEBUG("Handler::initPathFromLocation: Index path: " + tmpPath);
 			if (FileSystem::ExistDir(tmpPath) == true || FileSystem::ExistFile(tmpPath) == true) {
@@ -182,7 +183,7 @@ void Handler::initPathFromLocation() {
 		}
 	} else {
 		if (FileSystem::ExistDir(_filePath) == false && FileSystem::ExistFile(_filePath) == false) {
-			if (_location->getIsAutoindex() == true) {
+			if (_location.getIsAutoindex() == true) {
 				handleAutoIndex(_filePath.substr(0, _filePath.find_last_of('/')));
 			} else {
 				throw NotFound_404;
@@ -209,8 +210,8 @@ Method Handler::getMethodNum(const std::string &method) {
 std::string Handler::getFilePath(const std::string& uri) {
 	std::string filePath;
 	// CGI 처리
-	if (!_location->getCgiPath().empty()) {
-		std::string cgiPath = Utils::normalizePath(_location->getCgiPath());
+	if (!_location.getCgiPath().empty()) {
+		std::string cgiPath = Utils::normalizePath(_location.getCgiPath());
 		size_t lastSlash = uri.find_last_of("/");
 		if (uri.substr(0, lastSlash).find(".") != std::string::npos) {
 			// pathInfo가 존재하는 경우
@@ -225,9 +226,9 @@ std::string Handler::getFilePath(const std::string& uri) {
 
 	// 기본 경로 설정
 	LOG_DEBUG("Root path: " + _server.getRootPath());
-	LOG_DEBUG("Location path: " + _location->getRootPath());
-	std::string baseFilePath = !_location->getRootPath().empty() ? Utils::normalizePath(_location->getRootPath()) : _server.getRootPath();
-	if (baseFilePath.back() != '/') {
+	LOG_DEBUG("Location path: " + _location.getRootPath());
+	std::string baseFilePath = !_location.getRootPath().empty() ? Utils::normalizePath(_location.getRootPath()) : _server.getRootPath();
+	if (baseFilePath.size() > 1 && baseFilePath[baseFilePath.length() - 1] != '/') {
 		baseFilePath += "/";
 	}
 	LOG_DEBUG("Base path: " + baseFilePath);
@@ -239,15 +240,15 @@ std::string Handler::getFilePath(const std::string& uri) {
 
 
 	baseFilePath = buf;
-	if (!_location->getIsRegex() && uri.find(_location->getUriPath()) != std::string::npos) {
-		filePath = baseFilePath + "/" + uri.substr(uri.find(_location->getUriPath()) + _location->getUriPath().length());
+	if (!_location.getIsRegex() && uri.find(_location.getUriPath()) != std::string::npos) {
+		filePath = baseFilePath + "/" + uri.substr(uri.find(_location.getUriPath()) + _location.getUriPath().length());
 	} else {
 		filePath = baseFilePath + uri;
 	}
 
 	// 경로 정규화 및 최종 확인
 	filePath = ResponseHandle::Utils::normalizePath(filePath);
-	if (FileSystem::ExistDir(filePath) && filePath.back() != '/') {
+	if (FileSystem::ExistDir(filePath) && filePath[filePath.length() - 1] != '/') {
 		filePath += "/";
 	}
 
@@ -263,12 +264,12 @@ std::string Handler::getFilePath(const std::string& uri) {
 Response Handler::handleRedirect()
 {
 	Response response;
-	Status returnCode = static_cast<Status>(_location->getRedirect().first);
+	Status returnCode = static_cast<Status>(_location.getRedirect().first);
 	if (returnCode != MovedPermanently_301 && returnCode != Found_302 && returnCode != SeeOther_303 && returnCode != TemporaryRedirect_307 && returnCode != PermanentRedirect_308)
 	{
 		returnCode = MovedPermanently_301;
 	}
-	std::string returnUrl = _location->getRedirect().second;
+	std::string returnUrl = _location.getRedirect().second;
 
 	if (!returnUrl.empty())
 	{
@@ -330,7 +331,7 @@ String::BinaryBuffer Handler::handleGetRequest() {
 	}
 
 	// 리다이렉트 처리
-	if (!_location->getRedirect().second.empty())
+	if (!_location.getRedirect().second.empty())
 	{
 		return handleRedirect().getResponses();
 	}
@@ -389,7 +390,7 @@ String::BinaryBuffer Handler::handleGetRequest() {
 	else {
 		if (FileSystem::ExistDir(_filePath))
 		{
-			if (_location->getIsAutoindex())
+			if (_location.getIsAutoindex())
 			{
 				handleAutoIndex(_filePath);
 			} else
@@ -397,7 +398,7 @@ String::BinaryBuffer Handler::handleGetRequest() {
 				throw Forbidden_403;
 			}
 		} else {
-			if (!_location->getIsAutoindex())
+			if (!_location.getIsAutoindex())
 			{
 				throw NotFound_404;
 			}
@@ -426,7 +427,7 @@ String::BinaryBuffer Handler::handleGetRequest() {
 String::BinaryBuffer Handler::handlePostRequest()
 {
 	// 리다이렉트 처리
-	if (!_location->getRedirect().second.empty()) {
+	if (!_location.getRedirect().second.empty()) {
 		return handleRedirect().getResponses();
 	}
 
@@ -457,7 +458,7 @@ String::BinaryBuffer Handler::handlePostRequest()
 
 	// 응답 본문 생성
 	std::string responseBody = "Resource created successfully.\n";
-	responseBody += "Location: " + _location->getUriPath() + "/" + Utils::getFileName(filePath) + "\n";
+	responseBody += "Location: " + _location.getUriPath() + "/" + Utils::getFileName(filePath) + "\n";
 	responseBody += "Size: " + String::Itos(body.size()) + " bytes\n";
 
 	// 응답 설정
@@ -465,7 +466,7 @@ String::BinaryBuffer Handler::handlePostRequest()
 	_response.setHeader("Date", Utils::getCurTime());
 	_response.setHeader("Content-Type", "text/plain");
 	_response.setHeader("Content-Length", String::Itos(responseBody.size()));
-	_response.setHeader("Location", _location->getUriPath() + "/" + Utils::getFileName(filePath));
+	_response.setHeader("Location", _location.getUriPath() + "/" + Utils::getFileName(filePath));
 	_response.setHeader("Last-Modified", Utils::lastModify(filePath));
 	_response.setHeader("ETag", Utils::etag(filePath));
 	_response.setBody(responseBody);
@@ -476,8 +477,8 @@ void Handler::handleAutoIndex(const std::string &servRoot)
 {
 	std::string dirPath = servRoot;
 
-	std::string PATH = _server.getRootPath().empty() ? _location->getRootPath() : _server.getRootPath();
-	if (PATH.back() != '/')
+	std::string PATH = _server.getRootPath().empty() ? _location.getRootPath() : _server.getRootPath();
+	if (PATH.size() > 1 && PATH[PATH.length() - 1] != '/')
 		PATH += "/";
 	if (strncmp(dirPath.c_str(), PATH.c_str(), PATH.length()) == 0)
 		dirPath = dirPath.substr(PATH.length());

@@ -1,5 +1,5 @@
 #include "BinaryBuffer.hpp"
-
+#include <string.h>
 namespace String {
 
 BinaryBuffer::BinaryBuffer() : std::vector<char>() {}

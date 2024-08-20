@@ -37,7 +37,7 @@ private:
     const Request& _request;
     Server _server;
     Response _response;
-    Location* _location;
+    Location _location;
     std::string _rootPath;
     std::string _filePath;
     std::string _query;

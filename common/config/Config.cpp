@@ -33,7 +33,6 @@ namespace Config {
           success &= FileSystem::ExistDir(serv.getImgPath());
         success &= FileSystem::ExistDir(serv.getRootPath());
         success &= FileSystem::ExistFile(serv.getRootPath() + serv.getIdxPath());
-        std::cout << serv.getIdxPath() << std::endl;
         if (success == false)
           ErrorLog::fatal("server member variable error, port : " + serv.getPort() + "", __FILE__, __LINE__);
         std::vector<Location> locations = serv.getLocations();
@@ -41,8 +40,12 @@ namespace Config {
           Location loc = locations[j];
 
           success &= FileSystem::ExistDir(loc.getRootPath());
-          success &= FileSystem::ExistFile(loc.getIdxPath());
+		  LOG_DEBUG("SUCCESS: " + std::to_string(success));
+		  LOG_DEBUG("ROOT: " + loc.getRootPath());
+        //   success &= FileSystem::ExistFile(loc.getIdxPath());
+		//   LOG_DEBUG("SUCCESS: " + std::to_string(success));
           success &= (bool)loc.getMethods();
+		  LOG_DEBUG("SUCCESS: " + std::to_string(success));
           if (!loc.getCgiPath().empty())
             success &= FileSystem::ExistFile(loc.getCgiPath());
           if (loc.getIsAutoindex() == true)
@@ -71,11 +74,12 @@ namespace Config {
   }
 
   /* #region getter */
-  Server getServer(std::string port) {	
+  const Server& getServer(std::string port) {	
     std::vector<Server>::const_iterator ret = std::find_if(_servers.begin(), _servers.end(), CompareValue(port));
 
     if (ret == _servers.end())
-      return Server();
+      throw 403;
+    //   return Server();
     return *ret;
   }
   std::vector<Server> getServers() { return _servers; }

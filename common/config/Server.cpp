@@ -49,8 +49,8 @@ std::string getFileExtension(std::string str) {
 }
 
 typedef std::vector<Location>::const_iterator t_vecLoc_const_it;
-Location* getPreFixMatch(std::string path, std::vector<Location> locations) {
-  Location* ret = NULL;
+t_vecLoc_const_it getPreFixMatch(std::string path, const std::vector<Location>& locations) {
+  Location ret;
   size_t maxCntOfMatch = 0;
   std::vector<std::string> pathParts = String::Split(path, "/");
 
@@ -64,59 +64,43 @@ Location* getPreFixMatch(std::string path, std::vector<Location> locations) {
     }
     if (cnt > maxCntOfMatch){
       maxCntOfMatch = cnt;
-      ret = (Location *)&(*it);
-	  LOG_DEBUG(ret->getUriPath());
-	  LOG_DEBUG("Prefix match found");
+      return it;
     }
   }
-  return ret;
+  return locations.end();
 }
 
-Location* Server::getLocation(std::string path) const {
-  Location* regexMatch = NULL;
-  Location* defaultMatch = NULL;
+const Location& Server::getLocation(std::string path) const {
+  t_vecLoc_const_it regexMatch = locations.end();
+  t_vecLoc_const_it defaultMatch = locations.end();
 
-  Location* ret = NULL;
+  t_vecLoc_const_it ret = locations.end();
   std::string fileExtension = getFileExtension(path);
 
   for (t_vecLoc_const_it it = locations.begin(); it != locations.end(); it++) {
     std::string uri = it->getUriPath();
     std::string uriFileExtension = getFileExtension(uri);
 
-// 완전 매칭
+  // 완전 매칭
     if (!uri.compare(path)) {
-    //   std::cout << &(*it) << std::endl;
-		LOG_DEBUG("Exact match found");
-      return (Location *)&(*it);
+      return *it;
     } 
     else if (!uri.compare("/")) // 기본 매칭
-	{
-      defaultMatch = (Location *)&(*it);
-	  LOG_DEBUG("Default match found");
-	}
-    else if (it->getIsRegex() && !fileExtension.compare(uriFileExtension)) // 정규 표현식 매칭 
-	{
-		regexMatch = (Location *)&(*it);
-		LOG_ERROR("Regex match found");
-	}
-      
+      defaultMatch = it;
+    else if (it->getIsRegex() && !fileExtension.compare(uriFileExtension)) // 정규 표현식 매칭
+      regexMatch = it;
   }
-  Location* prefixMatch = getPreFixMatch(path, locations);
-  if (defaultMatch != NULL) {
+  t_vecLoc_const_it prefixMatch = getPreFixMatch(path, locations);
+  if (defaultMatch != locations.end())
     ret = defaultMatch;
-	LOG_DEBUG(defaultMatch->getUriPath() + " is the final match");
-  }
-  if (prefixMatch != NULL) {
+  if (prefixMatch != locations.end())
     ret = prefixMatch;
-	LOG_DEBUG(prefixMatch->getUriPath() + " is the final match");
-	LOG_DEBUG(ret->getUriPath() + " is the final match");
-  }
-  if (regexMatch != NULL) {
-
+  if (regexMatch != locations.end())
     ret = regexMatch;
-	LOG_DEBUG(ret->getUriPath() + " is the final match");
+  if (ret == locations.end()) {
+    throw NotFound_404;
   }
-  return ret;
+  return *ret;
 }
 
 std::vector<Location>& Server::getLocations() { return locations; }

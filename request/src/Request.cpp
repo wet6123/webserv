@@ -123,8 +123,11 @@ void Request::parseBufferedData(const BinaryBuffer& buffer) {
 			}
 		}
 	} catch (std::exception& e) {
-		LOG_ERROR("Error parsing request: " + std::string(e.what()));
 		_state = DONE;
+	} catch (const Status &e) {
+		std::cout << "Error parsing request: " << String::Itos(e) << std::endl;
+		_state = DONE;
+		throw e;
 	}
 }
 /**
@@ -210,6 +213,15 @@ void Request::parseRequestLine(const std::string& line) {
 	if (uri.size() > 1024) {
 		LOG_ERROR("Request::parseRequestLine: Request URI exceeds maximum size.");
 		throw UriTooLong_414;
+	}
+
+	int allowMethod = Config::getServer(_port).getLocation(uri).getMethods();
+	if ((method == "GET" && !(allowMethod & (1 << GET))) ||
+		(method == "POST" && !(allowMethod & (1 << POST))) ||
+		(method == "PUT" && !(allowMethod & (1 << PUT))) ||
+		(method == "DELETE" && !(allowMethod & (1 << DELETE)))) {
+		LOG_ERROR("Request::parseRequestLine: Method not allowed.");
+		throw MethodNotAllowed_405;
 	}
 	setHeader("Method", method);
 	setHeader("URI", uri);

@@ -21,7 +21,7 @@ public:
   void pushBackLocation(Location loc);
   void setData(ServerData data);
   /* #region getter */
-  Location* getLocation(std::string path) const;
+  const Location& getLocation(std::string path) const;
   std::vector<Location>& getLocations();
   std::string getPort() const;
   int getBodySize() const;
