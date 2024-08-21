@@ -146,8 +146,9 @@ bool Request::parseHeaders() {
 			return false;
 		}
 
-		if (line.size() < 2) {
-			continue;
+		if (line[line.size() - 2] != '\r') {
+			LOG_ERROR("Request::parseHeaders: Invalid request header format.");
+			throw BadRequest_400;
 		}
 
 		if (line == "\r\n") {
@@ -276,6 +277,7 @@ bool Request::parseBody() {
 			_buffer.clear();
 			_state = DONE;
 		} else {
+			LOG_ERROR("Request::parseBody: Invalid request body format.");
 			throw BadRequest_400;
 		}
 	}

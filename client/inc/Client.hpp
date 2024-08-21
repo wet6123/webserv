@@ -31,10 +31,17 @@ public:
 
 	void setTimeOut(time_t sec);
 	void setTimeOutSend(time_t sec);
-	bool isDone() const;
-	bool isClientFD(FD fd) const;
+	bool isReqDone() const;
 	bool isTimeout() const;
+	void setKeepAlive();
 	bool isKeepAlive() const;
+
+	bool isCgi() const;
+	bool isResDone() const;
+	bool hasResponse() const;
+	int makeResponse();
+	char **makeArgv(std::string cgiPath);
+	char **makeEnvp();
 
 	class ClientException : public std::exception
 	{
@@ -47,6 +54,7 @@ public:
 	};
 
 private:
+
 	typedef String::BinaryBuffer BinaryBuffer;
 	Client();
 	static const size_t BUFFER_SIZE = 1024;
@@ -58,6 +66,7 @@ private:
 	time_t _start;
 	time_t _timeout;
 	std::string _userId;
+	bool _keepAlive;
 };
 
 #endif

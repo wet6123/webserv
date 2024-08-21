@@ -42,21 +42,16 @@ void Client::close()
 */
 int Client::send()
 {
-	if (_status != OK_200)
-	{
-		_response = ErrorResponse::getErrorResponse(_status, _port);
-	} else {
-		_response = ResponseHandle::makeResponse(_request, _port);
-	}
-	std::cout << "response: " << _response << std::endl;
 	int bytes = 0;
-	if (_socket != -1)
+	if (_socket != -1 && _response.size() > 0)
 	{
+		std::cout << "send response: " << _response << std::endl;
 		bytes = ::send(_socket, _response.c_str(), _response.size(), MSG_NOSIGNAL);
 		if (bytes == -1)
 		{
 			throw ClientException("Failed to send data");
 		}
+		_response.erase(_response.begin(), _response.begin() + bytes);
 	}
 	return bytes;
 }
@@ -103,8 +98,8 @@ int Client::receive(size_t size)
 
 int Client::receive()
 {
-	char buffer[10];
-	int bytes = ::recv(_socket, buffer, 10,  MSG_NOSIGNAL);
+	char buffer[BUFFER_SIZE];
+	int bytes = ::recv(_socket, buffer, BUFFER_SIZE, MSG_NOSIGNAL);
 	if (bytes == -1)
 	{
 		return -1;
@@ -132,15 +127,15 @@ int Client::receive()
 	return bytes;
 }
 
-bool Client::isDone() const
+bool Client::isReqDone() const
 {
 	std::cout << "isDone: " << _request.isDone() << std::endl;
 	return _request.isDone();
 }
 
-bool Client::isClientFD(FD fd) const
+bool Client::isResDone() const
 {
-	return _socket == fd;
+	return _response.size() == 0;
 }
 
 void Client::setTimeOut(time_t sec)
@@ -177,7 +172,103 @@ bool Client::isTimeout() const
 	return time(NULL) - _start > _timeout;
 }
 
+void Client::setKeepAlive()
+{
+	_keepAlive = _response.str().find("Connection: keep-alive") != std::string::npos;
+}
+
 bool Client::isKeepAlive() const
 {
-	return _response.str().find("Connection: keep-alive") != std::string::npos;
+	return _keepAlive;
+}
+
+bool Client::isCgi() const
+{
+	Server server = Config::getServer(_port);
+	Location location = server.getLocation(_request.getHeader("URI"));
+	std::string cgiPath = location.getCgiPath();
+	if (cgiPath.empty())
+		return false;
+	return true;
+}
+
+bool Client::hasResponse() const
+{
+	return !_response.empty();
+}
+
+int Client::makeResponse()
+{
+	if (isCgi())
+	{
+		// make pipe
+		// FD fds[2];
+		// if (pipe(fds) == -1)
+		// {
+		// 	LOG_ERROR("Failed to make pipe");
+		// 	return -1;
+		// }
+
+		// set pipe nonblock
+		// close useless pipe
+		// set arg
+		Server server = Config::getServer(_port);
+		Location location = server.getLocation(_request.getHeader("URI"));
+		std::string cgiPath = location.getCgiPath();
+		const char *filename = cgiPath.c_str();
+		char **argv = makeArgv(cgiPath);
+		char **envp = makeEnvp();
+
+		// print arg
+		LOG_INFO("CGI filename: " + std::string(filename));
+		for (int i = 0; argv[i] != NULL; i++)
+			LOG_INFO("CGI argv[" + std::to_string(i) + "]: " + std::string(argv[i]));
+		for (int i = 0; envp[i] != NULL; i++)
+			LOG_INFO("CGI envp[" + std::to_string(i) + "]: " + std::string(envp[i]));
+
+		// fork
+		int pid = fork();
+		LOG_INFO("CGI pid: " + std::to_string(pid));
+		
+		if (pid == 0)
+		{
+			execve(filename, argv, envp);
+		} else if (pid == -1) {
+			LOG_ERROR("Failed to fork");
+			return 0;
+		}
+		return pid;
+	}
+	else
+	{
+		_response = ResponseHandle::makeResponse(_request, _port);
+		std::cout << "normal response: " << _response << std::endl;
+		return 0;
+	}
+}
+
+char **Client::makeArgv(std::string cgiPath)
+{
+	char **argv = new char*[2];
+	argv[0] = new char[cgiPath.size() + 1];
+	argv[1] = NULL;
+
+	strcpy(argv[0], cgiPath.c_str());
+	return argv;
+}
+
+char **Client::makeEnvp()
+{
+	// 재작성 필요. 일단은 테스트용
+	char **envp = new char*[5];
+	envp[0] = new char[19];
+	strcpy(envp[0], "REQUEST_METHOD=GET");
+	envp[1] = new char[25];
+	strcpy(envp[1], "SERVER_PROTOCOL=HTTP/1.1");
+	envp[2] = new char[24];
+	strcpy(envp[2], "SERVER_SOFTWARE=Webserv");
+	envp[3] = new char[26];
+	strcpy(envp[3],  "GATEWAY_INTERFACE=CGI/1.1");
+	envp[4] = NULL;
+	return envp;
 }
