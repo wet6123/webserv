@@ -2,6 +2,9 @@
 # define DEFINE_HPP
 
 #include <string>
+#ifndef PATH_MAX
+# define PATH_MAX 1024
+#endif
 
 /* #region typedef */
 	typedef int FD;

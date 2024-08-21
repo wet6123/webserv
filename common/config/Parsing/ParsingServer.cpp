@@ -96,10 +96,10 @@ void recursiveServerParsing(String::Reader &sr, Dict &dict, Server &ret) {
 }
 
 void updateLocations(t_vecLocation &locations, Server serv) {
-  std::string servRoot = serv.getRootPath();
-  std::string servIdxPath = serv.getIdxPath();
-
   for (size_t i = 0; i < locations.size(); i++) {
+    std::string root = serv.getRootPath();
+    std::string idxPath = serv.getIdxPath();
+
     Location &loc = locations[i];
 
     if (loc.getMethods() == 0) {
@@ -108,20 +108,25 @@ void updateLocations(t_vecLocation &locations, Server serv) {
       t |= 1 << DELETE;
       loc.setMethods(t);
     }
-    if (loc.getRootPath().empty()) {
-      loc.setRootPath(servRoot);
+
+    if (!loc.getRootPath().empty()) {
+      root = loc.getRootPath();
     }
 
-    if (loc.getIdxPath().empty()) {
-      loc.setIdxPath(servRoot + servIdxPath);
-      loc.setOriginalIdxPath(servIdxPath);
+    loc.setRootPath(root);
+
+    if (!loc.getIdxPath().empty()) {
+      idxPath = loc.getIdxPath();
+      loc.setOriginalIdxPath(idxPath);
     }
+    loc.setIdxPath(root + idxPath);
+	LOG_ERROR("idxPath: " + loc.getIdxPath());
 
     if (!loc.getCgiPath().empty()) {
-      loc.setCgiPath(servRoot + loc.getCgiPath());
+      loc.setCgiPath(root + loc.getCgiPath());
     }
 
-    loc.setAutoindexPath(servRoot + loc.getUriPath());
+    loc.setAutoindexPath(root + loc.getUriPath());
   }
 }
 

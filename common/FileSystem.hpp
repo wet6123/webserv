@@ -4,7 +4,7 @@
 #include <string>
 #include <fstream>
 #include <dirent.h>
-
+#include <sys/stat.h>
 
 
 namespace FileSystem {
