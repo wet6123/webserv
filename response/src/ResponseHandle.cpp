@@ -9,7 +9,12 @@ namespace ResponseHandle {
 Handler::Handler(const Request &request, const std::string& port) : _request(request), _port(port)
 {
 	requestInit();
-	_server = Config::getServer(_requestData.port);
+	try {
+		_server = Config::getServer(_requestData.port);
+	}
+	catch (const Status &e) {
+		LOG_FATAL("Handler::Handler: Error getting server: " + String::Itos(e));
+	}
 
 }
 /**
@@ -135,8 +140,13 @@ void Handler::initPathFromLocation() {
 	_query = _requestData.uri.find("?") != std::string::npos ? _requestData.uri.substr(_requestData.uri.find("?") + 1) : "";
 
 	_requestData.uri = _requestData.uri.substr(0, _requestData.uri.find("?"));
-	
-	_server = Config::getServer(_port);
+	try {
+		_server = Config::getServer(_port);
+	}
+	catch (const Status &e) {
+		LOG_FATAL("Handler::initPathFromLocation: Error getting server: " + String::Itos(e));
+		throw InternalServerError_500;
+	}
 
 	if (_server.getRootPath().empty())
 	{
@@ -451,10 +461,11 @@ String::BinaryBuffer Handler::handlePostRequest()
 		throw InternalServerError_500;
 	}
 
-	String::BinaryBuffer body;
-
-	file.write(&body[0], _requestData.content_length);
+	// 본문 읽기
+	String::BinaryBuffer body = _request.getBody();
+	file.write(body.c_str(), body.size());
 	file.close();
+	
 
 	// 응답 본문 생성
 	std::string responseBody = "Resource created successfully.\n";

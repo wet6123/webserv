@@ -17,7 +17,7 @@
 class Client : public IClient
 {
 public:	
-	Client(FD socket, const std::string &port);
+	Client(FD socket, const std::string port);
 	Client &operator=(const Client &client);
 	virtual ~Client();
 

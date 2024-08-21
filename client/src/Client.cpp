@@ -1,6 +1,6 @@
 #include "../inc/Client.hpp"
 
-Client::Client(FD socket, const std::string &port) : _socket(socket), _port(port), _request(port), _status(OK_200)
+Client::Client(FD socket, const std::string port) : _socket(socket), _port(port), _request(port), _status(OK_200)
 {
 }
 
@@ -212,7 +212,13 @@ int Client::makeResponse()
 		// set pipe nonblock
 		// close useless pipe
 		// set arg
-		Server server = Config::getServer(_port);
+		Server server;
+		try {
+			Server server = Config::getServer(_port);
+		}
+		catch (const Status &e) {
+			LOG_FATAL("Request::Request: Error getting server body size: " + String::Itos(e));
+		}
 		Location location = server.getLocation(_request.getHeader("URI"));
 		std::string cgiPath = location.getCgiPath();
 		const char *filename = cgiPath.c_str();

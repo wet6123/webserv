@@ -33,6 +33,8 @@ void WebServer::init()
  */
 void WebServer::addServerSocket(const std::string &host, const std::string &port)
 {
+	LOG_DEBUG("Add server socket: " + host + " " + port);
+	
   ServerSocket server_socket(host, port);
   server_socket.initServerSocket();
   _serverSocketList.push_back(server_socket);
@@ -90,6 +92,7 @@ void WebServer::run()
         if (ServerSocket *server = isServer(current_event->ident)) {
           FD client_fd = server->accept();
           std::string client_port = server->getPort();
+		  LOG_DEBUG("Client Port: " + client_port);
           client_manager.addClient(client_fd, client_port);
           addChangeList(client_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
           addChangeList(client_fd, EVFILT_WRITE, EV_ADD | EV_DISABLE, 0, 0, NULL);

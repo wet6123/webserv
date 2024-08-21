@@ -3,12 +3,29 @@
 
 Request::Request(PORT port) : _port(port), _state(HEADERS), _contentLength(0), _maxRequestSize(10 * 1024 * 1024)  {
 	_buffer.reserve(1024);
-	Server tmp = Config::getServer(port);
-	if (tmp.getName() == "") {
-		LOG_ERROR("Request::Request: Server not found.");
-		throw NotFound_404;
+	LOG_ERROR("PORT: " + port);
+	Server tmp;
+	try {
+		tmp = Config::getServer(port);
 	}
-	_maxBodySize = Config::getServer(port).getBodySize();
+	catch (const Status &e) {
+		LOG_FATAL("Request::Request: Error getting server: " + String::Itos(e));
+	}
+	if (tmp.getName() == "") {
+		LOG_FATAL("Request::Request: Server not found.");
+	}
+	try {
+		_maxBodySize = Config::getServer(port).getBodySize();
+
+	}
+	catch (const Status &e) {
+		LOG_FATAL("Request::Request: Error getting server body size: " + String::Itos(e));
+	}
+	LOG_DEBUG("Request::Request: Request object created.");
+	LOG_DEBUG("Request::Request: Maximum request size: " + String::Itos(_maxRequestSize));
+	if (_maxBodySize == 0) {
+		_maxBodySize = 10 * 1024 * 1024;
+	}
 }
 
 Request::Request(const Request& other) : _state(other._state), _contentLength(other._contentLength), _maxRequestSize(other._maxRequestSize), _maxBodySize(other._maxBodySize) {

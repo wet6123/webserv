@@ -2,7 +2,8 @@
 #include <cstring>
 
 ServerSocket::ServerSocket(const std::string& host, const std::string& port)
-	: _host(host.c_str()), _port(port.c_str()), _serverSocket(-1) {}
+	: _host(host), _port(port), _serverSocket(-1) {
+	}
 
 ServerSocket::~ServerSocket() {
 	if (_serverSocket != -1) {
@@ -17,12 +18,13 @@ ServerSocket::ServerSocket(const ServerSocket& other)
 		if (_serverSocket == -1) {
 			logError("Failed to duplicate socket in copy constructor");
 		}
+		LOG_DEBUG("ServerSocket duplicated");
+		LOG_DEBUG("Server IP:PORT = " + _serverIP + ":" + _port);
 	}
 }
 
 ServerSocket& ServerSocket::operator=(const ServerSocket& rhs) {
 	if (this != &rhs) {
-		close();
 		_host = rhs._host;
 		_port = rhs._port;
 		_serverIP = rhs._serverIP;
@@ -31,6 +33,8 @@ ServerSocket& ServerSocket::operator=(const ServerSocket& rhs) {
 			if (_serverSocket == -1) {
 				logError("Failed to duplicate socket in assignment operator");
 			}
+			close();
+			LOG_DEBUG("ServerSocket duplicated by assignment operator");
 		}
 	}
 	return *this;
@@ -57,8 +61,7 @@ void ServerSocket::bind() {
 	hints.ai_family = AF_INET;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_protocol = IPPROTO_TCP;
-
-	int status = getaddrinfo(_host, _port, &hints, &serverInfo);
+	int status = getaddrinfo(_host.c_str(), _port.c_str(), &hints, &serverInfo);
 	if (status != 0) {
 		std::string errorMsg = "getaddrinfo failed: ";
 		errorMsg += gai_strerror(status);
@@ -148,11 +151,11 @@ FD ServerSocket::getServerSocket() const {
 	return _serverSocket;
 }
 
-const char* ServerSocket::getHost() const {
+std::string ServerSocket::getHost() const {
 	return _host;
 }
 
-const char* ServerSocket::getPort() const {
+PORT ServerSocket::getPort() const {
 	return _port;
 }
 
