@@ -7,5 +7,11 @@
 	<h1>Welcome to My Web Server!</h1>
 	<p>This is the default page of my web server.</p>
 	<img src="images/medium.png" alt="Medium image">
+	<form action="/save" method="post" enctype="multipart/form-data">
+		<input type="text" name="username" />
+		<input type="text" name="age" />
+		<input type="file" name="file1" />
+		<button type="submit"> 전송</button>
+		</form>
 </body>
 </html>
