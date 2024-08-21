@@ -1,4 +1,9 @@
+#ifndef REQUEST_STRUCT_HPP
+#define REQUEST_STRUCT_HPP
+
 #include <iostream>
+#include "Request.hpp"
+#include "../../common/String.hpp"
 
 /**
  * @brief Request 구조체
@@ -66,12 +71,15 @@
 	Expires
 };
 */
+
 struct RequestData {
 	std::string method;
 	std::string uri;
 	std::string version;
 	// request header
 	std::string host;
+	std::string port;
+	std::string ip;
 	std::string user_agent;
 	std::string referer;
 	std::string accept;
@@ -79,6 +87,7 @@ struct RequestData {
 	std::string accept_language;
 	std::string accept_encoding;
 	std::string if_modified_since;
+	std::string if_none_match;
 	std::string authorization;
 	std::string origin;
 	std::string cookie;
@@ -98,4 +107,9 @@ struct RequestData {
 	std::string allow;
 	std::string etag;
 	std::string expires;
+
+	
+
 };
+
+#endif

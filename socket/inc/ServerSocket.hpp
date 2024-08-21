@@ -17,6 +17,7 @@ class ServerSocket {
 public:
 	ServerSocket(const std::string &host, const std::string &port);
 	~ServerSocket();
+	ServerSocket(const ServerSocket &rhs);
 	ServerSocket &operator=(const ServerSocket &rhs);
 
 	FD	accept();
@@ -52,7 +53,6 @@ private:
 	void	close();
 
 	ServerSocket();
-	ServerSocket(const ServerSocket &rhs);
 	
 	const char *_host;
 	const char *_port;

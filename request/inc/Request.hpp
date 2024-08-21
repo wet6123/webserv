@@ -1,10 +1,12 @@
+#ifndef REQUEST_HPP
+#define REQUEST_HPP
+
 #include <iostream>
 #include <map>
 #include <fstream>
 #include <sstream>
 #include <string>
 
-#include "Request_struct.hpp"
 #include "../../common/String.hpp"
 #include "../../common/ErrorLog.hpp"
 #include "../../common/Define.hpp"
@@ -22,6 +24,7 @@ public:
 		DONE
 	};
 private:
+	PORT 			_port;
 	state			_state;
 	size_t 			_contentLength;
 	size_t			_maxRequestSize;
@@ -30,7 +33,7 @@ private:
 	BinaryBuffer	_buffer;
 	BinaryBuffer	_body;
 public:
-	Request();
+	Request(PORT port);
 	Request(const Request& other);
 	Request& operator=(const Request& rhs);
 	~Request();
@@ -41,8 +44,10 @@ public:
 	void setHeader(const std::string& key, const std::string& value);
 	void removeHeader(const std::string& key);
 	void clearHeaders();
-	void parseBufferedData(std::vector<char>& buffer);
+	void parseBufferedData(const BinaryBuffer& buffer);
 	bool isDone() const;
+	void clear();
+	PORT getPort() const;
 private:
 	void finishHeaders();
 	void parseRequestHeader(const std::string& line);
@@ -51,3 +56,5 @@ private:
 	bool parseBody();
 	bool parseChunkedBody();
 };
+
+#endif

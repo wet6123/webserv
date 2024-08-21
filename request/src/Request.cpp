@@ -1,10 +1,21 @@
 #include "../inc/Request.hpp"
+#include "../../common/Config.hpp"
 
-Request::Request() : _state(HEADERS), _contentLength(0), _maxRequestSize(10 * 1024 * 1024), _maxBodySize(10 * 1024 * 1024) {
+Request::Request(PORT port) : _port(port), _state(HEADERS), _contentLength(0), _maxRequestSize(10 * 1024 * 1024)  {
 	_buffer.reserve(1024);
+	Server tmp = Config::getServer(port);
+	if (tmp.getName() == "") {
+		LOG_ERROR("Request::Request: Server not found.");
+		throw NotFound_404;
+	}
+	_maxBodySize = Config::getServer(port).getBodySize();
 }
 
-Request::Request(const Request& other) : _headers(other._headers), _buffer(other._buffer), _body(other._body), _state(other._state), _contentLength(other._contentLength), _maxRequestSize(other._maxRequestSize) {}
+Request::Request(const Request& other) : _state(other._state), _contentLength(other._contentLength), _maxRequestSize(other._maxRequestSize), _maxBodySize(other._maxBodySize) {
+	_headers = other._headers;
+	_buffer = other._buffer;
+	_body = other._body;
+}
 
 Request& Request::operator=(const Request& rhs) {
 	if (this != &rhs) {
@@ -79,7 +90,8 @@ void Request::clearHeaders() {
  * @param buffer Request Data
  * @note Request Data를 파싱하여 Request Data, Header, Body를 추출
 */
-void Request::parseBufferedData(std::vector<char>& buffer) {
+void Request::parseBufferedData(const BinaryBuffer& buffer) {
+	LOG_DEBUG(buffer.str());
 	LOG_DEBUG("Request::parseBufferedData: Parsing request data.");
 	if (_buffer.size() + buffer.size() > _maxRequestSize) {
 		LOG_ERROR("Request::parseBufferedData: Request size exceeds maximum size.");
@@ -96,6 +108,7 @@ void Request::parseBufferedData(std::vector<char>& buffer) {
 			{
 			case HEADERS:
 				continueParsing = parseHeaders();
+				LOG_DEBUG("Request::parseBufferedData: Request parsing complete.");
 				break;
 			case BODY:
 				continueParsing = parseBody();
@@ -111,9 +124,15 @@ void Request::parseBufferedData(std::vector<char>& buffer) {
 			}
 		}
 	} catch (std::exception& e) {
-		LOG_ERROR("Error parsing request: " + std::string(e.what()));
+		LOG_DEBUG("Request::parseBufferedData: Request parsing complete.");
 		_state = DONE;
+	} catch (const Status &e) {
+		LOG_DEBUG("Request::parseBufferedData: Request parsing complete.");
+		std::cout << "Error parsing request: " << String::Itos(e) << std::endl;
+		_state = DONE;
+		throw e;
 	}
+	LOG_DEBUG("Request::parseBufferedData: Request parsing complete.");
 }
 /**
  * @brief 헤더 파싱
@@ -127,8 +146,11 @@ bool Request::parseHeaders() {
 			return false;
 		}
 
+		if (line.size() < 2) {
+			continue;
+		}
+
 		if (line == "\r\n") {
-			_state = BODY;
 			finishHeaders();
 			return true;
 		}
@@ -146,13 +168,23 @@ bool Request::parseHeaders() {
 */
 void Request::finishHeaders() {
 	std::string contentLength = getHeader("Content-Length");
-	if (!contentLength.empty()) {
-		_contentLength = std::stoul(contentLength);
-		_state = BODY;
+	std::string Method = getHeader("Method");
+	if (!contentLength.empty() && Method == "POST") {
+		try {
+			_contentLength = String::ToUL(contentLength);
+			_state = BODY;
+		}
+		catch (std::exception& e) {
+			LOG_ERROR("Request::finishHeaders: Invalid content length.");
+			throw BadRequest_400;
+		}
 	} else if (getHeader("Transfer-Encoding") == "chunked") {
 		_state = CHUNKED_BODY;
-	} else {
+	} else if (Method == "GET") {
 		_state = DONE;
+	} else {
+		LOG_ERROR("Request::finishHeaders: Invalid request.");
+		throw BadRequest_400;
 	}
 }
 /**
@@ -164,7 +196,31 @@ void Request::parseRequestLine(const std::string& line) {
 	std::string method, uri, version;
 	if (!(iss >> method >> uri >> version) || iss.fail() ){
 		LOG_ERROR("Request::parseRequestLine: Invalid request line format.");
-		throw BadRequest_400;
+		throw MisdirectedRequest_421;
+	}
+
+	if (method != "GET" && method != "POST" && method != "PUT" && method != "DELETE") {
+		LOG_ERROR("Request::parseRequestLine: Invalid request method.");
+		throw MethodNotAllowed_405;
+	}
+
+	if (version != "HTTP/1.1") {
+		LOG_ERROR("Request::parseRequestLine: Invalid request version.");
+		throw HttpVersionNotSupported_505;
+	}
+
+	if (uri.size() > 1024) {
+		LOG_ERROR("Request::parseRequestLine: Request URI exceeds maximum size.");
+		throw UriTooLong_414;
+	}
+
+	int allowMethod = Config::getServer(_port).getLocation(uri).getMethods();
+	if ((method == "GET" && !(allowMethod & (1 << GET))) ||
+		(method == "POST" && !(allowMethod & (1 << POST))) ||
+		(method == "PUT" && !(allowMethod & (1 << PUT))) ||
+		(method == "DELETE" && !(allowMethod & (1 << DELETE)))) {
+		LOG_ERROR("Request::parseRequestLine: Method not allowed.");
+		throw MethodNotAllowed_405;
 	}
 	setHeader("Method", method);
 	setHeader("URI", uri);
@@ -186,8 +242,19 @@ void Request::parseRequestHeader(const std::string& line) {
 	std::string key = line.substr(0, pos);
 	std::string value = line.substr(pos + 1);
 
-	String::Trim(key);
-	String::Trim(value);
+	key = String::Trim(key);
+	value = String::Trim(value);
+
+	if (key.empty() || value.empty()) {
+		LOG_ERROR("Request::parseRequestHeader: Invalid request header format.");
+		throw BadRequest_400;
+	}
+
+	if (value.size() > 1024) {
+		LOG_ERROR("Request::parseRequestHeader: Request header value exceeds maximum size.");
+		throw RequestHeaderFieldsTooLarge_431;
+	}
+
 	setHeader(key, value);
 }
 /**
@@ -198,13 +265,19 @@ void Request::parseRequestHeader(const std::string& line) {
 */
 bool Request::parseBody() {
 	if (_contentLength > _maxBodySize) {
+
 		LOG_ERROR("Request::parseBody: Request body size exceeds maximum size.");
 		throw PayloadTooLarge_413;
 	}
 	if (_buffer.size() >= _contentLength) {
 		_body += _buffer.subStr(0, _contentLength);
-		_buffer.clear();
-		_state = DONE;
+		_buffer.remove(0, _contentLength);
+		if (_buffer.size() == 2 || _buffer.empty()) {
+			_buffer.clear();
+			_state = DONE;
+		} else {
+			throw BadRequest_400;
+		}
 	}
 	return false;
 }
@@ -237,4 +310,16 @@ bool Request::parseChunkedBody() {
 
 bool Request::isDone() const {
 	return _state == DONE;
+}
+
+void Request::clear() {
+	_contentLength = 0;
+	_state = HEADERS;
+	_headers.clear();
+	_buffer.clear();
+	_body.clear();
+}
+
+PORT Request::getPort() const {
+	return _port;
 }

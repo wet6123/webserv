@@ -2,6 +2,9 @@
 # define DEFINE_HPP
 
 #include <string>
+#ifndef PATH_MAX
+# define PATH_MAX 1024
+#endif
 
 /* #region typedef */
 	typedef int FD;
@@ -14,10 +17,13 @@ enum State{
 };
 
 enum Method{
+    NONE,
     GET,
     POST,
     PUT,
-    DELETE
+    DELETE,
+	HEAD,
+	INVALID
 };
 
 enum Status{
@@ -94,4 +100,5 @@ enum Status{
     NotExtended_510 = 510,
     NetworkAuthenticationRequired_511 = 511,	
 };
+
 #endif
