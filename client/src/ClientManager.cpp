@@ -8,6 +8,7 @@ ClientManager::~ClientManager()
 }
 
 void ClientManager::addClient(FD client_fd, const std::string &port) {
+	LOG_DEBUG("PORT : !!!!!!!!!!!!!!!!!!!!!!!!!" + port);
   Client* client = new Client(client_fd, port);
   _clientList[client_fd] = client;
 }

@@ -78,7 +78,7 @@ namespace Config {
     std::vector<Server>::const_iterator ret = std::find_if(_servers.begin(), _servers.end(), CompareValue(port));
 
     if (ret == _servers.end())
-      throw 403;
+      throw Forbidden_403;
     //   return Server();
     return *ret;
   }

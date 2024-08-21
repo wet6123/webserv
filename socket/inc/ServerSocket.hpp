@@ -30,8 +30,8 @@ public:
 	void logError(const std::string &msg) const;
 
 	FD getServerSocket() const;
-	const char *getHost() const;
-	const char *getPort() const;
+	std::string getHost() const;
+	PORT getPort() const;
 	std::string getServerIP() const;
 
 	class SocketException : public std::exception {
@@ -54,8 +54,8 @@ private:
 
 	ServerSocket();
 	
-	const char *_host;
-	const char *_port;
+	std::string _host;
+	PORT	_port;
 	int _serverSocket;
 	std::string _serverIP;
 };
