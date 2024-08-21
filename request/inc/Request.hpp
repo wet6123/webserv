@@ -24,6 +24,7 @@ public:
 		DONE
 	};
 private:
+	PORT 			_port;
 	state			_state;
 	size_t 			_contentLength;
 	size_t			_maxRequestSize;
@@ -32,7 +33,7 @@ private:
 	BinaryBuffer	_buffer;
 	BinaryBuffer	_body;
 public:
-	Request();
+	Request(PORT port);
 	Request(const Request& other);
 	Request& operator=(const Request& rhs);
 	~Request();
@@ -46,6 +47,7 @@ public:
 	void parseBufferedData(const BinaryBuffer& buffer);
 	bool isDone() const;
 	void clear();
+	PORT getPort() const;
 private:
 	void finishHeaders();
 	void parseRequestHeader(const std::string& line);

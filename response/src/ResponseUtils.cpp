@@ -12,16 +12,13 @@ namespace ResponseHandle {
 		*/
 		std::string normalizePath(std::string uri) {
 			// remove double slash
-			LOG_DEBUG("uri: " + uri);
 			while (uri.find("//") != std::string::npos) {
 				uri.replace(uri.find("//"), 2, "/");
 			}
-			LOG_DEBUG("uri: " + uri);
 			// remove ../
 			while (uri.find("../") != std::string::npos) {
 				uri.replace(uri.find("../"), 3, "");
 			}
-			LOG_DEBUG("uri: " + uri);
 			// remove /./
 			while (uri.find("/./") != std::string::npos) {
 				uri.replace(uri.find("/./"), 3, "/");
@@ -36,9 +33,9 @@ namespace ResponseHandle {
 		std::string lastModify(const std::string& filePath) {
 			struct stat fileStat;
 			if (stat(filePath.c_str(), &fileStat) == 0) {
-				// std::time_t lastModifiedTime = fileStat.st_mtime;
+				std::time_t lastModifiedTime = fileStat.st_mtime;
 				std::stringstream ss;
-				// ss << std::put_time(std::gmtime(&lastModifiedTime), "%a, %d %b %Y %H:%M:%S GMT");
+				ss << getFormattedTime(lastModifiedTime);
 				return ss.str();
 			}
 			return "";
@@ -156,8 +153,7 @@ namespace ResponseHandle {
 			{
 				return false;
 			}
-			// if (path.length() > PATH_MAX)
-			if (path.length() > 100)
+			if (path.length() > PATH_MAX)
 			{
 				return false;
 			}

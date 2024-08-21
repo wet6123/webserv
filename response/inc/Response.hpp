@@ -47,7 +47,6 @@ public:
 	void	clearAll();
 
 private:
-	Request _request;
 	Headers _headers;
 	std::string _version;
 	Status _status;

@@ -98,7 +98,7 @@ const Location& Server::getLocation(std::string path) const {
   if (regexMatch != locations.end())
     ret = regexMatch;
   if (ret == locations.end()) {
-    throw 404;
+    throw NotFound_404;
   }
   return *ret;
 }

@@ -1,6 +1,6 @@
 #include "../inc/Client.hpp"
 
-Client::Client(FD socket, const std::string &port) : _socket(socket), _port(port), _status(OK_200)
+Client::Client(FD socket, const std::string &port) : _socket(socket), _port(port), _request(port), _status(OK_200)
 {
 }
 
@@ -42,7 +42,12 @@ void Client::close()
 */
 int Client::send()
 {
-	_response = ResponseHandle::makeResponse(_request, _port);
+	if (_status != OK_200)
+	{
+		_response = ErrorResponse::getErrorResponse(_status, _port);
+	} else {
+		_response = ResponseHandle::makeResponse(_request, _port);
+	}
 	std::cout << "response: " << _response << std::endl;
 	int bytes = 0;
 	if (_socket != -1)
@@ -82,12 +87,12 @@ int Client::receive(size_t size)
     	LOG_DEBUG("Request processing halted due to previous error: " + String::Itos(_status));
     	return bytes;
 	}
-	
 	try {
 	    _request.parseBufferedData(std::string(buffer, bytes));
 	} catch (const Status& e) {
-		_request.clear();
+		// _request.clear();
 		_status = e;
+		LOG_FATAL("Error parsing request: " + String::Itos(e));
 	} catch (const std::exception& e) {
 		LOG_ERROR("Unexpected error during parsing: " + std::string(e.what()));
 		_request.clear();
@@ -98,16 +103,16 @@ int Client::receive(size_t size)
 
 int Client::receive()
 {
-	char buffer[BUFFER_SIZE];
-	int bytes = ::recv(_socket, buffer, BUFFER_SIZE,  MSG_NOSIGNAL);
+	char buffer[10];
+	int bytes = ::recv(_socket, buffer, 10,  MSG_NOSIGNAL);
 	if (bytes == -1)
 	{
 		return -1;
 	}
 	if (bytes == 0)
 	{
-		LOG_DEBUG("Client disconnected");
-		throw ClientException("Client disconnected");
+		// LOG_DEBUG("Client disconnected");
+		// throw ClientException("Client disconnected");
 	}
 	if (_status != OK_200) {
     	LOG_DEBUG("Request processing halted due to previous error: " + String::Itos(_status));
@@ -117,7 +122,7 @@ int Client::receive()
 	try {
 	    _request.parseBufferedData(std::string(buffer, bytes));
 	} catch (const Status& e) {
-		_request.clear();
+		// _request.clear();
 		_status = e;
 	} catch (const std::exception& e) {
 		LOG_ERROR("Unexpected error during parsing: " + std::string(e.what()));
@@ -129,6 +134,7 @@ int Client::receive()
 
 bool Client::isDone() const
 {
+	std::cout << "isDone: " << _request.isDone() << std::endl;
 	return _request.isDone();
 }
 
@@ -173,5 +179,5 @@ bool Client::isTimeout() const
 
 bool Client::isKeepAlive() const
 {
-	return _request.getHeader("Connection") != "close";
+	return _response.str().find("Connection: keep-alive") != std::string::npos;
 }
