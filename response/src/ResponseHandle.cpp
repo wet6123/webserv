@@ -194,7 +194,7 @@ void Handler::initPathFromLocation() {
 	} else {
 		if (FileSystem::ExistDir(_filePath) == false && FileSystem::ExistFile(_filePath) == false) {
 			if (_location.getIsAutoindex() == true) {
-				handleAutoIndex(_filePath.substr(0, _filePath.find_last_of('/')));
+				_filePath.substr(0, _filePath.find_last_of('/'));
 			} else {
 				throw NotFound_404;
 			}
@@ -436,10 +436,10 @@ String::BinaryBuffer Handler::handleGetRequest() {
 
 String::BinaryBuffer Handler::handlePostRequest()
 {
-	// 리다이렉트 처리
-	if (!_location.getRedirect().second.empty()) {
-		return handleRedirect().getResponses();
-	}
+	// // 리다이렉트 처리
+	// if (!_location.getRedirect().second.empty()) {
+	// 	return handleRedirect().getResponses();
+	// }
 
 	// Content-Length 확인
 	if (_requestData.content_length < 0) {
@@ -451,35 +451,20 @@ String::BinaryBuffer Handler::handlePostRequest()
 		throw PayloadTooLarge_413;
 	}
 
-	// 파일 경로 설정 및 확장자 확인
-	std::string filePath = _filePath;
-	std::string extension = Utils::getFileExtension(filePath);
-
-	// 파일 쓰기 작업
-	std::ofstream file(filePath.c_str(), std::ios::binary | std::ios::app);
-	if (!file.is_open()) {
-		throw InternalServerError_500;
-	}
-
-	// 본문 읽기
-	String::BinaryBuffer body = _request.getBody();
-	file.write(body.c_str(), body.size());
-	file.close();
-	
-
 	// 응답 본문 생성
-	std::string responseBody = "Resource created successfully.\n";
-	responseBody += "Location: " + _location.getUriPath() + "/" + Utils::getFileName(filePath) + "\n";
-	responseBody += "Size: " + String::Itos(body.size()) + " bytes\n";
+	std::string responseBody = "Resource saved successfully.\n";
+	responseBody += "Size: " + String::Itos(_requestData.content_length) + " bytes\n";
 
 	// 응답 설정
-	_response.setStatusCode(Created_201);
-	_response.setHeader("Date", Utils::getCurTime());
+	_response.setStatusCode(OK_200);
+	LOG_ERROR(_response.getResponses().str());
+	_response.setHeader("Content-Length", String::Itos(responseBody.length()));
+	LOG_ERROR(_response.getResponses().str());
+	_response.setHeader("Connection", _requestData.connection);
+	LOG_ERROR(_response.getResponses().str());
+	_response.setHeader("Server", "42Webserv");
 	_response.setHeader("Content-Type", "text/plain");
-	_response.setHeader("Content-Length", String::Itos(responseBody.size()));
-	_response.setHeader("Location", _location.getUriPath() + "/" + Utils::getFileName(filePath));
-	_response.setHeader("Last-Modified", Utils::lastModify(filePath));
-	_response.setHeader("ETag", Utils::etag(filePath));
+	_response.setHeader("Date", Utils::getCurTime());
 	_response.setBody(responseBody);
 	return _response.getResponses();
 }
@@ -551,6 +536,7 @@ void Handler::handleAutoIndex(const std::string &servRoot)
 		_response.setBody(body.str());
 		_response.setHeader("Content-Length", String::Itos(body.str().length()));
 		_response.setHeader("Connection", _requestData.connection);
+		_response.setHeader("Server", "42Webserv");
 	}
 }
 
