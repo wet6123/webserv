@@ -241,17 +241,26 @@ int Client::makeResponse()
 		std::string uri = _request.getHeader("URI");
 		Location location;
 		try {
-			Location location = server.getLocation(uri);
+			location = server.getLocation(uri);
+
+			LOG_WARNING("Location: " + location.getUriPath());
+			LOG_WARNING("Location: " + location.getCgiPath());
 		}
 		catch (const Status &e) {
 			LOG_FATAL("Request::Request: Error getting server location: " + String::Itos(e));
 		}
 		std::string cgiPath;
 		std::string pathInfo;
+		LOG_WARNING(location.getUriPath());
+		LOG_WARNING(location.getCgiPath());
 		if (location.getIsRegex()) {
 			std::string extension = ResponseHandle::Utils::getFileExtension(uri);
-			cgiPath = location.getCgiPath() + uri.substr(0, uri.find(".") + extension.size());
-			pathInfo = uri.substr(uri.find(".") + extension.size());
+			if (extension.empty()) {
+				LOG_ERROR("Failed to get extension");
+				return 0;
+			}
+			cgiPath = location.getCgiPath() + uri.substr(0, uri.find(".") + 1 + extension.size());
+			pathInfo = uri.substr(uri.find(".") + 1 + extension.size());
 		}
 		else {
 			if (uri.length() < location.getUriPath().length()) {

@@ -75,15 +75,12 @@ const Location& Server::getLocation(std::string path) const {
   t_vecLoc_const_it defaultMatch = locations.end();
 
   t_vecLoc_const_it ret = locations.end();
-  LOG_WARNING("PATH : " + path);
   std::string fileExtension = getFileExtension(path);
-	LOG_WARNING("FILE EXTENSION : " + fileExtension);
   for (t_vecLoc_const_it it = locations.begin(); it != locations.end(); it++) {
     std::string uri = it->getUriPath();
     std::string uriFileExtension = getFileExtension(uri);
-	if (uriFileExtension[uriFileExtension.size() - 1] == '$') {
+	if (uriFileExtension.length() > 2 && uriFileExtension[uriFileExtension.size() - 1] == '$') {
 		uriFileExtension = uriFileExtension.substr(0, uriFileExtension.size() - 1);
-		LOG_WARNING("URI FILE EXTENSION : " + uriFileExtension);
 	}
 
   // 완전 매칭
@@ -94,7 +91,6 @@ const Location& Server::getLocation(std::string path) const {
       defaultMatch = it;
     else if (it->getIsRegex() && !fileExtension.compare(uriFileExtension)) {
       regexMatch = it;
-		LOG_WARNING("REGEX MATCH");
 	} // 정규 표현식 매칭
   }
   t_vecLoc_const_it prefixMatch = getPreFixMatch(path, locations);
