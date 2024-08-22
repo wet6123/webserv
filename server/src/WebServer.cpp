@@ -33,8 +33,6 @@ void WebServer::init()
  */
 void WebServer::addServerSocket(const std::string &host, const std::string &port)
 {
-	LOG_DEBUG("Add server socket: " + host + " " + port);
-	
   ServerSocket server_socket(host, port);
   server_socket.initServerSocket();
   _serverSocketList.push_back(server_socket);
@@ -167,6 +165,7 @@ void WebServer::run()
         LOG_DEBUG("CGI response made");
         waitpid(pid, NULL, 0);
         LOG_DEBUG("process exit");
+        client_manager.handleCgiResponse(_pidList[pid]);
         // 자동으로 큐에서 삭제된다. (https://forums.freebsd.org/threads/how-to-use-kevent-confused-by-manpage.92419/)
         // addChangeList(current_event->ident, EVFILT_PROC, EV_DELETE, 0, 0, NULL);
         addChangeList(_pidList[pid], EVFILT_WRITE, EV_ENABLE, 0, 0, NULL);

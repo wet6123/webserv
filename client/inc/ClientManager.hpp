@@ -20,6 +20,7 @@ class ClientManager
     bool isResDone(FD client_fd);
     bool isKeepAlive(FD client_fd);
     pid_t makeResponse(FD client_fd);
+    void handleCgiResponse(FD client_fd);
 
   private:
     std::map<FD, Client*> _clientList;
