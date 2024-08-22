@@ -164,7 +164,6 @@ void Handler::initPathFromLocation() {
 	LOG_DEBUG("Handler::initPathFromLocation: Location: " + _location.getUriPath());
 
 	_filePath = getFilePath(_requestData.uri);
-	LOG_DEBUG("Handler::initPathFromLocation: File path: " + _filePath);
 	if (_filePath.empty())
 	{
 		LOG_WARNING("Handler::initPathFromLocation: File path is empty.");
