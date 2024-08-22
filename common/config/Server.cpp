@@ -96,6 +96,7 @@ const Location& Server::getLocation(std::string path) const {
   t_vecLoc_const_it defaultMatch = locations.end();
 
   t_vecLoc_const_it ret = locations.end();
+  LOG_WARNING("PATH : " + path);
   std::string fileExtension = getFileExtension(path);
   for (t_vecLoc_const_it it = locations.begin(); it != locations.end(); it++) {
     std::string uri = it->getUriPath();
@@ -114,7 +115,6 @@ const Location& Server::getLocation(std::string path) const {
     else if (!uri.compare("/")) // 기본 매칭
       defaultMatch = it;
     else if (it->getIsRegex() && !fileExtension.compare(uriFileExtension)) {
-		LOG_WARNING("REGEX MATCH");
       regexMatch = it;
 	} // 정규 표현식 매칭
   }
