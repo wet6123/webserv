@@ -185,7 +185,7 @@ void ServerSocket::initServerSocket() {
 	LOG_INFO("Socket options set");
 	bind();
 	LOG_INFO("Socket bound");
-	listen(DEFAULTBACKLOG);
+	listen(SOMAXCONN);
 	LOG_INFO("Socket listening");
 	LOG_INFO("Server IP:PORT = " + _serverIP + ":" + _port);
 	LOG_INFO("Server socket is ready");

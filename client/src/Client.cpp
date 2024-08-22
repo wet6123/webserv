@@ -45,7 +45,7 @@ int Client::send()
 	int bytes = 0;
 	if (_socket != -1 && _response.size() > 0)
 	{
-		std::cout << "send response: " << _response << std::endl;
+		// std::cout << "send response: " << _response << std::endl;
 		bytes = ::send(_socket, _response.c_str(), _response.size(), MSG_NOSIGNAL);
 		if (bytes == -1)
 		{
@@ -248,7 +248,7 @@ int Client::makeResponse()
 	else
 	{
 		_response = ResponseHandle::makeResponse(_request, _port);
-		std::cout << "normal response: " << _response << std::endl;
+		// std::cout << "normal response: " << _response << std::endl;
 		return 0;
 	}
 }
