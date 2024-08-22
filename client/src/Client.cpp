@@ -363,19 +363,6 @@ char **Client::makeEnvp(std::string pathInfo)
 		// content_length
 		// path_info
 		// cig-path뒤에 오는 하위 path
-		LOG_WARNING("수정해야함");
-		LOG_WARNING("pathInfo: " + pathInfo);
-		if (_request.getHeader("Method") == "GET") {
-			size_t pos = pathInfo.find("?");
-			if (pos != std::string::npos) {
-				setenv("QUERY_STRING", pathInfo.substr(pos + 1).c_str(), 1);
-				pathInfo = pathInfo.substr(0, pos);
-			}
-			else {
-				setenv("QUERY_STRING", "", 1);
-			}
-
-		}
 		setenv("PATH_INFO", pathInfo.c_str(), 1);
 
 		// setenv("AUTH_TYPE", "", 1);
@@ -412,11 +399,9 @@ char **Client::makeEnvp(std::string pathInfo)
 		setenv("HTTP_PRAGMA", _request.getHeader("Cache-Control").c_str(), 1);
 		setenv("HTTP_KEEP_ALIVE", _request.getHeader("Keep-Alive").c_str(), 1);
 	}
-	// if (_request.getHeader("Method") == "GET") {
-	// 	// query_string
-	// 	// ?
-	// 	setenv("QUERY_STRING", "", 1);
-	// }
+	if (_request.getHeader("Method") == "GET") {
+		setenv("QUERY_STRING", _request.getHeader("Query-String").c_str(), 1);
+	}
 	if (_request.getHeader("Method") == "POST" ) {
 		setenv("CONTENT_LENGTH", _request.getHeader("Content-Length").c_str(), 1);
 		setenv("CONTENT_TYPE", _request.getHeader("Content-Type").c_str(), 1);
