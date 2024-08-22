@@ -41,11 +41,19 @@ struct CompareValue {
 // 5. 없으면 null
 
 std::string getFileExtension(std::string str) {
-  std::vector<std::string> strs = String::Split(str, ".");
-  size_t size = strs.size();
-  if (size != 0)
-    return strs[size - 1];
-  return "";
+ 	size_t pos = str.find_last_of(".");
+	if (pos == std::string::npos) {
+		return "";
+	}
+	std::string tmp = str.substr(pos + 1);
+	size_t slashPos = tmp.find_first_of("/");
+	if (slashPos == std::string::npos) {
+		LOG_INFO("FILE EXTENSION : " + tmp);
+		return tmp;
+	}
+	std::string ret = str.substr(pos + 1) + tmp.substr(0, slashPos);
+	LOG_INFO("FILE EXTENSION : " + ret.substr(ret.find(".")));
+	return ret.substr(ret.find("."));
 }
 
 typedef std::vector<Location>::const_iterator t_vecLoc_const_it;
@@ -71,6 +79,19 @@ t_vecLoc_const_it getPreFixMatch(std::string path, const std::vector<Location>& 
 }
 
 const Location& Server::getLocation(std::string path) const {
+	std::string tmp = path;
+
+  size_t pos = tmp.find(".");
+  LOG_WARNING("PATH : " + path);
+  if (pos != std::string::npos) {
+	std::string tmp2 = tmp.substr(pos + 1);
+	LOG_WARNING("TMP2 : " + tmp2);
+	size_t slashPos = tmp2.find_first_of("/");
+	if (slashPos != std::string::npos) {
+		path = tmp.substr(0, pos + 1) + tmp2.substr(0, slashPos);
+	}
+  }
+  LOG_ERROR("PATH : " + path);
   t_vecLoc_const_it regexMatch = locations.end();
   t_vecLoc_const_it defaultMatch = locations.end();
 
@@ -82,6 +103,9 @@ const Location& Server::getLocation(std::string path) const {
 	if (uriFileExtension.length() > 2 && uriFileExtension[uriFileExtension.size() - 1] == '$') {
 		uriFileExtension = uriFileExtension.substr(0, uriFileExtension.size() - 1);
 	}
+	// LOG_WARNING("URI FILE EXTESION :" + uriFileExtension);
+	// LOG_WARNING("FILE EXTENSION " + fileExtension);
+	
 
   // 완전 매칭
     if (!uri.compare(path)) {
@@ -90,6 +114,7 @@ const Location& Server::getLocation(std::string path) const {
     else if (!uri.compare("/")) // 기본 매칭
       defaultMatch = it;
     else if (it->getIsRegex() && !fileExtension.compare(uriFileExtension)) {
+		LOG_WARNING("REGEX MATCH");
       regexMatch = it;
 	} // 정규 표현식 매칭
   }

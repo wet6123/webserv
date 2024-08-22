@@ -51,6 +51,7 @@ int Client::send()
 			size = 1024;
 		else
 			size = _response.size();
+		// LOG_WARNING("Response: " + _response.subStr(0, size).str());
 		bytes = ::send(_socket, _response.subStr(0, size).c_str(), size, MSG_NOSIGNAL);
 		if (bytes == -1)
 		{
@@ -239,6 +240,7 @@ int Client::makeResponse()
 			LOG_FATAL("Request::Request: Error getting server body size: " + String::Itos(e));
 		}
 		std::string uri = _request.getHeader("URI");
+		// LOG_FATAL("URI: " + uri);
 		Location location;
 		try {
 			location = server.getLocation(uri);
@@ -259,6 +261,9 @@ int Client::makeResponse()
 				LOG_ERROR("Failed to get extension");
 				return 0;
 			}
+			LOG_WARNING("Extension: " + extension);
+			LOG_WARNING("URI: " + uri);
+			std::string tmp = location.getCgiPath();
 			cgiPath = location.getCgiPath() + uri.substr(0, uri.find(".") + 1 + extension.size());
 			pathInfo = uri.substr(uri.find(".") + 1 + extension.size());
 		}
@@ -268,6 +273,12 @@ int Client::makeResponse()
 				cgiPath = location.getCgiPath();
 			}
 			else {
+				LOG_WARNING("!!!!!!!!!!!!!!!!!!!!!!!!");
+				size_t pos = uri.find(".");
+				if (pos == std::string::npos) {
+					pathInfo = "";
+				}
+				LOG_WARNING("URI: " + uri);
 				pathInfo = uri.substr(location.getUriPath().length());
 				cgiPath = location.getCgiPath();
 			}
@@ -301,7 +312,15 @@ int Client::makeResponse()
 			::close(write_fds[0]);
 			::close(write_fds[1]);
 			execve(filename, argv, envp);
-			LOG_FATAL("Failed to execve");
+			Response response;
+			response.setHeader("Content-Type", "text/html");
+			response.setStatusCode(InternalServerError_500);
+			std::string body = "Internal Server Error 500";
+			response.setHeader("Content-Length", String::Itos(body.size()));
+			response.setHeader("Connection", "close");
+			response.setBody(body);
+			std::cout << response.getResponses();
+			exit(1);
 		} else if (pid > 1) {
 			// parent
 			write(write_fds[1], _request.getBody().c_str(), _request.getBody().size());

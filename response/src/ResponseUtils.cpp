@@ -101,14 +101,15 @@ namespace ResponseHandle {
 		 * @param filePath 확장자를 반환할 filePath
 		 * @return std::string filePath의 확장자
 		*/
-		std::string getFileExtension(const std::string &filePath)
-		{
-			size_t dotPos = filePath.find_last_of('.');
-			if (dotPos != std::string::npos)
-			{
-				return filePath.substr(dotPos + 1);
-			}
-			return "";
+		std::string getFileExtension(const std::string &str) {
+			size_t pos = str.find_last_of(".");
+			std::string tmp = str.substr(pos + 1);
+			size_t slashPos = tmp.find_first_of("/");
+			if (pos == std::string::npos)
+				return "";
+			if (slashPos == std::string::npos)
+				return str.substr(pos + 1);
+			return str.substr(pos + 1, slashPos);
 		}
 		/**
 		 * @brief seconds 후의 만료 시간을 반환합니다.
