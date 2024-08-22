@@ -313,11 +313,6 @@ Response Handler::handleRedirect()
  * 
 */
 String::BinaryBuffer Handler::handleGetRequest() {
-
-	// If-Modified-Since 또는 If-None-Match 헤더 처리
-	// etag가 우선순위가 더 높음
-	LOG_DEBUG("ETag: " + _requestData.etag);
-	LOG_DEBUG("If-None-Match: " + _requestData.if_none_match);
 	if (!_requestData.if_none_match.empty() && _requestData.if_none_match == Utils::etag(_filePath))
 	{
 		LOG_DEBUG("ETag Matched");
@@ -388,12 +383,6 @@ String::BinaryBuffer Handler::handleGetRequest() {
 		} else {
 			_response.setHeader("Content-Language", "en-US");
 		}
-		
-		// if (!_requestData.accept_encoding.empty()) {
-		// 	_response.setHeader("Content-Encoding", _requestData.accept_encoding);
-		// } else {
-		// 	_response.setHeader("Content-Encoding", "identity");
-		// }
 
 		_response.setHeader("Content-Disposition", "inline");
 	}
@@ -576,10 +565,6 @@ String::BinaryBuffer Handler::handleDeleteRequest()
 	}
 	return _response.getResponses();
 }
-
-// String::BinaryBuffer Handler::handleDownloadRequest() {
-// 	std::string filenName = Utils::getFileName(_filePath);
-// }
 
 } // namespace ResponseHandle
 
