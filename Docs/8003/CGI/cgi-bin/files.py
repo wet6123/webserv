@@ -49,7 +49,7 @@ def download_file(username, filename):
         sys.stdout.buffer.write("Content-Type: text/html\r\n".encode())
         sys.stdout.buffer.write("Status: 500 Internal Server Error\r\n".encode())
         sys.stdout.buffer.write(b"\r\n")
-        sys.stdout.buffer.write(f"<html><body><h1>Internal Server Error</h1><p>{e}</p></body></html>".encode())
+        sys.stdout.buffer.write(f"<html><body><h1>Internal Server Errorssss</h1><p>{e}</p></body></html>".encode())
     sys.stdout.flush()
     sys.exit(0)
 

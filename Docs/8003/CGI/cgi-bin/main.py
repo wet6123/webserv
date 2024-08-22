@@ -135,7 +135,8 @@ def main():
         print_response(response_body, status_code, cookie_string=cookie_set)
 
     except Exception as e:
-        response_body = f"<html><body><h1>Internal Server Error</h1><p>{e}</p></body></html>"
+        sys.stderr.write(f"Error: {e}")
+        response_body = f"<html><body><h1>Internal Server Error11111</h1><p>{e}</p></body></html>"
         print_response(response_body, HTTPStatus.INTERNAL_SERVER_ERROR)
 
 if __name__ == "__main__":

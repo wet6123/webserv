@@ -6,7 +6,7 @@ import os
 import sys
 import hashlib
 
-UPLOAD_BASE_DIR = "/Users/iyeonjae/Documents/GitHub/webserv/CGI/uploads"
+UPLOAD_BASE_DIR = os.path.join(os.path.dirname(__file__), "uploads")
 
 def get_user_upload_dir(username):
     user_hash = hashlib.sha256(username.encode()).hexdigest()
@@ -33,8 +33,10 @@ def increment_filename(filename, user_dir):
 
 
 def upload_file(username):
+    sys.stderr.write(UPLOAD_BASE_DIR)
     # FieldStorage instance
     form = cgi.FieldStorage()
+    sys.stderr.write(str(form))
 
     # Get the file item
     file_item = form['file']
