@@ -234,6 +234,7 @@ int Client::makeResponse()
 		}
 		Location location = server.getLocation(_request.getHeader("URI"));
 		std::string cgiPath = location.getCgiPath();
+		LOG_WARNING("CGI Path: " + cgiPath);
 		const char *filename = cgiPath.c_str();
 		char **argv = makeArgv(cgiPath);
 		char **envp = makeEnvp();
@@ -308,7 +309,6 @@ char **Client::makeEnvp()
 		pathInfo = pathInfo.substr(0, pathInfo.find("?"));
 		LOG_WARNING("pathInfo: " + pathInfo);
 		setenv("PATH_INFO", pathInfo.c_str(), 1);
-
 
 		// setenv("AUTH_TYPE", "", 1);
 		setenv("GATEWAY_INTERFACE", "CGI/1.1", 1);

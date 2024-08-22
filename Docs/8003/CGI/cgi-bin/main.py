@@ -29,8 +29,7 @@ def print_response(response_body, status_code=HTTPStatus.OK, content_type='text/
     print(f"HTTP/1.1 {status_code.value} {status_code.phrase}")
     print(f"Connection: {os.environ.get("HTTP_CONNECTION", os.environ.get("CONNECTION", "close"))}")
     print(f"Content-Disposition: inline")
-    if ( os.environ.get("REQUEST_METHOD", "GET") == "POST"):
-        print(f"Content-Length: {len(response_body)}")
+    print(f"Content-Length: {len(response_body)}")
     print(f"Content-Type: {content_type}")
     if cookie_string:
         for cookie in cookie_string:
@@ -128,8 +127,8 @@ def main():
                 response_body, status_code = list_files(username)
             else:
                 response_body = "<html><body><h1>Hello, CGI!</h1>\
-                    <div><button type=\"button\" onclick=\"location.href='upload'\">move to upload</button></div>\
-                    <div><button type=\"button\" onclick=\"location.href='calculator'\">move to calculator</button></div>\
+                    <div><button type=\"button\" onclick=\"location.href='main/upload'\">move to upload</button></div>\
+                    <div><button type=\"button\" onclick=\"location.href='main/calculator'\">move to calculator</button></div>\
                     <p>{}</p></body></html>".format(escape(query_string))
                 status_code = HTTPStatus.OK
 
