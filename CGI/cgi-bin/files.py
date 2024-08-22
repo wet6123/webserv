@@ -4,15 +4,17 @@ import os
 import cgi
 import cgitb
 import sys
+from upload import get_user_upload_dir
 from http import HTTPStatus
 
 # Enable debugging
 cgitb.enable()
 
-UPLOAD_DIR = "/Users/iyeonjae/Documents/GitHub/webserv/CGI/uploads"
+UPLOAD_BASE_DIR = "/Users/iyeonjae/Documents/GitHub/webserv/CGI/uploads"
 
-def list_files():
-    files = os.listdir(UPLOAD_DIR)
+def list_files(username):
+    user_dir = get_user_upload_dir(username)
+    files = os.listdir(user_dir)
     
     response_body = "<html><body><h1>Uploaded Files</h1><ul>"
     
@@ -29,8 +31,9 @@ def list_files():
     
     return response_body, HTTPStatus.OK
 
-def download_file(file_name):
-    file_path = os.path.join(UPLOAD_DIR, file_name)
+def download_file(username, filename):
+    user_dir = get_user_upload_dir(username)
+    file_path = os.path.join(user_dir, filename)
     
     try:
         with open(file_path, 'rb') as file:
@@ -38,7 +41,7 @@ def download_file(file_name):
         
         # Set headers for file download
         sys.stdout.buffer.write(f"Content-Type: application/octet-stream\r\n".encode())
-        sys.stdout.buffer.write(f"Content-Disposition: attachment; filename=\"{file_name}\"\r\n".encode())
+        sys.stdout.buffer.write(f"Content-Disposition: attachment; filename=\"{filename}\"\r\n".encode())
         sys.stdout.buffer.write(f"Content-Length: {len(content)}\r\n".encode())
         sys.stdout.buffer.write(b"\r\n")
         sys.stdout.buffer.write(content)
@@ -50,8 +53,9 @@ def download_file(file_name):
     sys.stdout.flush()
     sys.exit(0)
 
-def delete_file(file_name):
-    file_path = os.path.join(UPLOAD_DIR, file_name)
+def delete_file(username, filename):
+    user_dir = get_user_upload_dir(username)
+    file_path = os.path.join(user_dir, filename)
     os.remove(file_path)
     
     sys.stdout.buffer.write("Status: 303 See Other\r\n".encode())
