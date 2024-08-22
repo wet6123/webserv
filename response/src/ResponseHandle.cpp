@@ -463,7 +463,9 @@ String::BinaryBuffer Handler::handlePostRequest()
 	_response.setHeader("Connection", _requestData.connection);
 	LOG_ERROR(_response.getResponses().str());
 	_response.setHeader("Server", "42Webserv");
+	_response.setHeader("Location", "/index.html");
 	_response.setHeader("Content-Type", "text/plain");
+	_response.setHeader("Content-Disposition", "attachment");
 	_response.setHeader("Date", Utils::getCurTime());
 	_response.setBody(responseBody);
 	return _response.getResponses();
