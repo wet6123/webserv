@@ -197,5 +197,6 @@ const char* ServerSocket::SocketException::what() const throw() {
 
 void ServerSocket::logError(const std::string& msg) const {
 	LOG_WARNING(msg);
+	LOG_FATAL(strerror(errno));
 	throw SocketException(msg);
 }

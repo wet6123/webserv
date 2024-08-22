@@ -73,7 +73,7 @@ void WebServer::run()
   while (1) {
     events_size = kevent(_kq, &_changeList[0], _changeList.size(), event_list, MAXEVENTS, NULL);
     if (events_size == -1) {
-      LOG_ERROR("Kevent Error");
+      LOG_WARNING("Kevent Error");
       break;
     }
 
@@ -84,7 +84,7 @@ void WebServer::run()
 
       LOG_DEBUG("Event: " + std::to_string(i) + " Ident: " + std::to_string(current_event->ident) + " Filter: " + std::to_string(current_event->filter) + " Actions: " + std::to_string(current_event->flags));
       if (current_event->flags & EV_ERROR) {
-        LOG_ERROR("Error on event. Ident: " + std::to_string(current_event->ident) + " " + strerror(errno));
+        LOG_WARNING("Error on event. Ident: " + std::to_string(current_event->ident) + " " + strerror(errno));
       }
 
       if (current_event->filter == EVFILT_READ) {
@@ -172,7 +172,7 @@ void WebServer::run()
         // addChangeList(current_event->ident, EVFILT_PROC, EV_DELETE, 0, 0, NULL);
         addChangeList(_pidList[pid], EVFILT_WRITE, EV_ENABLE, 0, 0, NULL);
       } else {
-        LOG_ERROR("Unknown event: Ident " + std::to_string(current_event->ident) + " Filter " + std::to_string(current_event->filter) + " Actions " + std::to_string(current_event->flags));
+        LOG_WARNING("Unknown event: Ident " + std::to_string(current_event->ident) + " Filter " + std::to_string(current_event->filter) + " Actions " + std::to_string(current_event->flags));
       }
     }
   }

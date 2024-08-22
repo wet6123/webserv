@@ -7,7 +7,7 @@
 int main(int argc, char *argv[])
 {
   // ignore_signal
-  // config
+  ErrorLog::setLogLevel(ErrorLog::INFO);
 	ResponseHandle::Utils::setReasonPhrase();
   if (argc >= 2) {
     Config::init(argv[1]);
