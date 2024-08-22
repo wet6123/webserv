@@ -46,8 +46,8 @@ namespace Config {
 		//   LOG_DEBUG("SUCCESS: " + std::to_string(success));
           success &= (bool)loc.getMethods();
 		  LOG_DEBUG("SUCCESS: " + std::to_string(success));
-          if (!loc.getCgiPath().empty())
-            success &= FileSystem::ExistFile(loc.getCgiPath());
+        //   if (!loc.getCgiPath().empty())
+        //     success &= FileSystem::ExistFile(loc.getCgiPath());
           if (loc.getIsAutoindex() == true)
             success &= FileSystem::ExistDir(loc.getAutoindexPath());
 

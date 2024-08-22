@@ -42,7 +42,7 @@ public:
 	bool hasResponse() const;
 	int makeResponse();
 	char **makeArgv(std::string cgiPath);
-	char **makeEnvp();
+	char **makeEnvp(std::string pathInfo);
 	void makeCgiResponse();
 	
 

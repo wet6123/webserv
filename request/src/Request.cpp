@@ -173,7 +173,13 @@ bool Request::parseHeaders() {
 		}
 
 		if (_headers.empty()) {
-			parseRequestLine(line.str());
+			try {
+				parseRequestLine(line.str());
+			}
+			catch (const Status &e) {
+				LOG_WARNING("Request::parseHeaders: Error parsing request line: " + String::Itos(e));
+				throw e;
+			}
 		} else {
 			parseRequestHeader(line.str());
 		}
@@ -230,8 +236,14 @@ void Request::parseRequestLine(const std::string& line) {
 		LOG_WARNING("Request::parseRequestLine: Request URI exceeds maximum size.");
 		throw UriTooLong_414;
 	}
-
-	int allowMethod = Config::getServer(_port).getLocation(uri).getMethods();
+	int allowMethod;
+	try {
+		allowMethod = Config::getServer(_port).getLocation(uri).getMethods();
+	}
+	catch (const Status &e) {
+		LOG_WARNING("Request::parseRequestLine: Error getting server location: " + String::Itos(e));
+		throw e;
+	}
 	if ((method == "GET" && !(allowMethod & (1 << GET))) ||
 		(method == "POST" && !(allowMethod & (1 << POST))) ||
 		(method == "PUT" && !(allowMethod & (1 << PUT))) ||

@@ -92,7 +92,6 @@ int Client::receive(size_t size)
 	} catch (const Status& e) {
 		// _request.clear();
 		_status = e;
-		LOG_FATAL("Error parsing request: " + String::Itos(e));
 	} catch (const std::exception& e) {
 		LOG_ERROR("Unexpected error during parsing: " + std::string(e.what()));
 		_request.clear();
@@ -189,7 +188,14 @@ bool Client::isKeepAlive() const
 bool Client::isCgi() const
 {
 	Server server = Config::getServer(_port);
-	Location location = server.getLocation(_request.getHeader("URI"));
+	Location location;
+	try {
+		location = server.getLocation(_request.getHeader("URI"));
+
+	}
+	catch (const Status &e) {
+		return false;
+	}
 	std::string cgiPath = location.getCgiPath();
 	if (cgiPath.empty())
 		return false;
@@ -232,12 +238,39 @@ int Client::makeResponse()
 		catch (const Status &e) {
 			LOG_FATAL("Request::Request: Error getting server body size: " + String::Itos(e));
 		}
-		Location location = server.getLocation(_request.getHeader("URI"));
-		std::string cgiPath = location.getCgiPath();
+		std::string uri = _request.getHeader("URI");
+		Location location;
+		try {
+			Location location = server.getLocation(uri);
+		}
+		catch (const Status &e) {
+			LOG_FATAL("Request::Request: Error getting server location: " + String::Itos(e));
+		}
+		std::string cgiPath;
+		std::string pathInfo;
+		if (location.getIsRegex()) {
+			std::string extension = ResponseHandle::Utils::getFileExtension(uri);
+			cgiPath = location.getCgiPath() + uri.substr(0, uri.find(".") + extension.size());
+			pathInfo = uri.substr(uri.find(".") + extension.size());
+		}
+		else {
+			if (uri.length() < location.getUriPath().length()) {
+				pathInfo = "";
+				cgiPath = location.getCgiPath();
+			}
+			else {
+				pathInfo = uri.substr(location.getUriPath().length());
+				cgiPath = location.getCgiPath();
+			}
+
+		}
+
+		// std::string cgiPath = location.getCgiPath();
 		LOG_WARNING("CGI Path: " + cgiPath);
+		LOG_WARNING("Path Info: " + pathInfo);
 		const char *filename = cgiPath.c_str();
 		char **argv = makeArgv(cgiPath);
-		char **envp = makeEnvp();
+		char **envp = makeEnvp(pathInfo);
 
 		// print arg
 		// LOG_INFO("CGI filename: " + std::string(filename));
@@ -290,7 +323,7 @@ char **Client::makeArgv(std::string cgiPath)
 	return argv;
 }
 
-char **Client::makeEnvp()
+char **Client::makeEnvp(std::string pathInfo)
 {
 	Server server = Config::getServer(_port);
 	if (_request.getHeader("Method") == "GET" || _request.getHeader("Method") == "POST")
@@ -303,11 +336,18 @@ char **Client::makeEnvp()
 		// path_info
 		// cig-path뒤에 오는 하위 path
 		LOG_WARNING("수정해야함");
-		std::string pathInfo = _request.getHeader("URI");
-		std::string uriPath = server.getLocation(pathInfo).getUriPath();
-		pathInfo = pathInfo.substr(uriPath.size());
-		pathInfo = pathInfo.substr(0, pathInfo.find("?"));
 		LOG_WARNING("pathInfo: " + pathInfo);
+		if (_request.getHeader("Method") == "GET") {
+			size_t pos = pathInfo.find("?");
+			if (pos != std::string::npos) {
+				setenv("QUERY_STRING", pathInfo.substr(pos + 1).c_str(), 1);
+				pathInfo = pathInfo.substr(0, pos);
+			}
+			else {
+				setenv("QUERY_STRING", "", 1);
+			}
+
+		}
 		setenv("PATH_INFO", pathInfo.c_str(), 1);
 
 		// setenv("AUTH_TYPE", "", 1);
@@ -344,10 +384,11 @@ char **Client::makeEnvp()
 		setenv("HTTP_PRAGMA", _request.getHeader("Cache-Control").c_str(), 1);
 		setenv("HTTP_KEEP_ALIVE", _request.getHeader("Keep-Alive").c_str(), 1);
 	}
-	if (_request.getHeader("Method") == "GET") {
-		// query_string
-		setenv("QUERY_STRING", "", 1);    
-	}
+	// if (_request.getHeader("Method") == "GET") {
+	// 	// query_string
+	// 	// ?
+	// 	setenv("QUERY_STRING", "", 1);
+	// }
 	if (_request.getHeader("Method") == "POST" ) {
 		setenv("CONTENT_LENGTH", _request.getHeader("Content-Length").c_str(), 1);
 		setenv("CONTENT_TYPE", _request.getHeader("Content-Type").c_str(), 1);
