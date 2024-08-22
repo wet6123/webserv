@@ -274,6 +274,7 @@ int Client::makeResponse()
 	else
 	{
 		_response = ResponseHandle::makeResponse(_request, _port);
+		setKeepAlive();
 		return 0;
 	}
 }
@@ -379,4 +380,5 @@ void Client::makeCgiResponse()
 	{
 			LOG_ERROR("Failed to close read end of pipe");
 	}
+	setKeepAlive();
 }
