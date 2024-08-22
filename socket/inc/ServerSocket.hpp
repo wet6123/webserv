@@ -44,7 +44,6 @@ public:
 	};
 	
 private:
-	static const int DEFAULTBACKLOG = 10;
 	static const int DEFAULTBUFFER = 1024;
 	
 	void	socket();

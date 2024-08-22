@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <assert.h>
+#include <fcntl.h>
 #include "../../common/ErrorLog.hpp"
 #include "../../common/Define.hpp"
 #include "../../request/inc/Request.hpp"
@@ -42,6 +43,8 @@ public:
 	int makeResponse();
 	char **makeArgv(std::string cgiPath);
 	char **makeEnvp();
+	void makeCgiResponse();
+	
 
 	class ClientException : public std::exception
 	{
@@ -67,6 +70,9 @@ private:
 	time_t _timeout;
 	std::string _userId;
 	bool _keepAlive;
+	FD read_fds[2];
+	FD write_fds[2];
+	// fds[0] = read, fds[1] = write
 };
 
 #endif

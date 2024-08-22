@@ -34,7 +34,7 @@ LocationData makeLocationData(Dict dict) {
       std::string value = values[size++];
       if (value.compare("on") && value.compare("off"))
         ErrorLog::fatal("location autoindex value must on or off", __FILE__, __LINE__);
-      data.isAutoindex = value.compare("on");
+      data.isAutoindex = !value.compare("on");
     } else if (!key.compare("cgi-path")) {
       data.cgiPath = values[size++];
     } else if (!key.compare("return")) {

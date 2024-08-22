@@ -33,8 +33,6 @@ void WebServer::init()
  */
 void WebServer::addServerSocket(const std::string &host, const std::string &port)
 {
-	LOG_DEBUG("Add server socket: " + host + " " + port);
-	
   ServerSocket server_socket(host, port);
   server_socket.initServerSocket();
   _serverSocketList.push_back(server_socket);
@@ -145,8 +143,6 @@ void WebServer::run()
         if (client_manager.isClient(current_event->ident)) {
           // send
           int bytes = client_manager.sendToClient(current_event->ident);
-          // response도 끊어서 나가는 경우 있음.
-          // 다 보냈으면 _response를 비워줘야함. => 잘라서 보내면 됨.
           LOG_DEBUG("byte write: " + std::to_string(bytes));
           if (client_manager.isKeepAlive(current_event->ident)
             && client_manager.isResDone(current_event->ident)
@@ -157,7 +153,6 @@ void WebServer::run()
           } else if (client_manager.isKeepAlive(current_event->ident) == false
             && client_manager.isResDone(current_event->ident)
           ) {
-            // response를 다 보내면 빈 문자열이 되어서 keep-alive 못찾음
 			      LOG_INFO("Close");
             client_manager.closeClient(current_event->ident);
           }
@@ -168,6 +163,7 @@ void WebServer::run()
         LOG_DEBUG("CGI response made");
         waitpid(pid, NULL, 0);
         LOG_DEBUG("process exit");
+        client_manager.handleCgiResponse(_pidList[pid]);
         // 자동으로 큐에서 삭제된다. (https://forums.freebsd.org/threads/how-to-use-kevent-confused-by-manpage.92419/)
         // addChangeList(current_event->ident, EVFILT_PROC, EV_DELETE, 0, 0, NULL);
         addChangeList(_pidList[pid], EVFILT_WRITE, EV_ENABLE, 0, 0, NULL);

@@ -96,7 +96,7 @@ bool ClientManager::isKeepAlive(FD client_fd) {
 
 pid_t ClientManager::makeResponse(FD client_fd) {
   if (_clientList.find(client_fd) != _clientList.end()) {
-  //   if (_status != OK_200)
+    // if (_status != OK_200)
     // {
     // 	_response = ErrorResponse::getErrorResponse(_status, _port);
     // } else {
@@ -105,4 +105,10 @@ pid_t ClientManager::makeResponse(FD client_fd) {
     return (_clientList[client_fd]->makeResponse());
   }
   return 0;
+}
+
+void ClientManager::handleCgiResponse(FD client_fd) {
+  if (_clientList.find(client_fd) != _clientList.end()) {
+    _clientList[client_fd]->makeCgiResponse();
+  }
 }

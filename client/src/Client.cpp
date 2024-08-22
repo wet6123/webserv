@@ -30,6 +30,7 @@ void Client::close()
 {
 	if (_socket != -1)
 	{
+		::shutdown(_socket, SHUT_RDWR);
 		::close(_socket);
 		_socket = -1;
 	}
@@ -45,8 +46,12 @@ int Client::send()
 	int bytes = 0;
 	if (_socket != -1 && _response.size() > 0)
 	{
-		// std::cout << "send response: " << _response << std::endl;
-		bytes = ::send(_socket, _response.c_str(), _response.size(), MSG_NOSIGNAL);
+		int size = 0;
+		if (_response.size() >= 1024)
+			size = 1024;
+		else
+			size = _response.size();
+		bytes = ::send(_socket, _response.subStr(0, size).c_str(), size, MSG_NOSIGNAL);
 		if (bytes == -1)
 		{
 			throw ClientException("Failed to send data");
@@ -129,7 +134,6 @@ int Client::receive()
 
 bool Client::isReqDone() const
 {
-	std::cout << "isDone: " << _request.isDone() << std::endl;
 	return _request.isDone();
 }
 
@@ -202,43 +206,66 @@ int Client::makeResponse()
 	if (isCgi())
 	{
 		// make pipe
-		// FD fds[2];
-		// if (pipe(fds) == -1)
-		// {
-		// 	LOG_ERROR("Failed to make pipe");
-		// 	return -1;
-		// }
+		if (pipe(read_fds) == -1 || pipe(write_fds) == -1)
+		{
+			LOG_ERROR("Failed to make pipe");
+			return -1;
+		}
 
 		// set pipe nonblock
+		int flags = fcntl(read_fds[0], F_GETFL, 0);
+		fcntl(read_fds[0], F_SETFL, flags | O_NONBLOCK);
+		flags = fcntl(read_fds[1], F_GETFL, 0);
+		fcntl(read_fds[1], F_SETFL, flags | O_NONBLOCK);
+
+		flags = fcntl(write_fds[0], F_GETFL, 0);
+		fcntl(write_fds[0], F_SETFL, flags | O_NONBLOCK);
+		flags = fcntl(write_fds[1], F_GETFL, 0);
+		fcntl(write_fds[1], F_SETFL, flags | O_NONBLOCK);
+
 		// close useless pipe
 		// set arg
 		Server server;
 		try {
-			Server server = Config::getServer(_port);
+			server = Config::getServer(_port);
 		}
 		catch (const Status &e) {
 			LOG_FATAL("Request::Request: Error getting server body size: " + String::Itos(e));
 		}
 		Location location = server.getLocation(_request.getHeader("URI"));
 		std::string cgiPath = location.getCgiPath();
+		LOG_WARNING("CGI Path: " + cgiPath);
 		const char *filename = cgiPath.c_str();
 		char **argv = makeArgv(cgiPath);
 		char **envp = makeEnvp();
 
 		// print arg
-		LOG_INFO("CGI filename: " + std::string(filename));
-		for (int i = 0; argv[i] != NULL; i++)
-			LOG_INFO("CGI argv[" + std::to_string(i) + "]: " + std::string(argv[i]));
-		for (int i = 0; envp[i] != NULL; i++)
-			LOG_INFO("CGI envp[" + std::to_string(i) + "]: " + std::string(envp[i]));
+		// LOG_INFO("CGI filename: " + std::string(filename));
+		// for (int i = 0; argv[i] != NULL; i++)
+		// 	LOG_INFO("CGI argv[" + std::to_string(i) + "]: " + std::string(argv[i]));
+		// for (int i = 0; envp[i] != NULL; i++)
+		// 	LOG_INFO("CGI envp[" + std::to_string(i) + "]: " + std::string(envp[i]));
 
 		// fork
 		int pid = fork();
 		LOG_INFO("CGI pid: " + std::to_string(pid));
 		
-		if (pid == 0)
-		{
+		if (pid == 0) {
+			// child
+			::dup2(read_fds[1], STDOUT_FILENO);
+			::dup2(write_fds[0], STDIN_FILENO);
+			::close(read_fds[0]);
+			::close(read_fds[1]);
+			::close(write_fds[0]);
+			::close(write_fds[1]);
 			execve(filename, argv, envp);
+			LOG_FATAL("Failed to execve");
+		} else if (pid > 1) {
+			// parent
+			write(write_fds[1], _request.getBody().c_str(), _request.getBody().size());
+			::close(write_fds[0]);
+			::close(write_fds[1]);
+			::close(read_fds[1]);
 		} else if (pid == -1) {
 			LOG_ERROR("Failed to fork");
 			return 0;
@@ -248,7 +275,7 @@ int Client::makeResponse()
 	else
 	{
 		_response = ResponseHandle::makeResponse(_request, _port);
-		// std::cout << "normal response: " << _response << std::endl;
+		setKeepAlive();
 		return 0;
 	}
 }
@@ -265,16 +292,93 @@ char **Client::makeArgv(std::string cgiPath)
 
 char **Client::makeEnvp()
 {
-	// 재작성 필요. 일단은 테스트용
-	char **envp = new char*[5];
-	envp[0] = new char[19];
-	strcpy(envp[0], "REQUEST_METHOD=GET");
-	envp[1] = new char[25];
-	strcpy(envp[1], "SERVER_PROTOCOL=HTTP/1.1");
-	envp[2] = new char[24];
-	strcpy(envp[2], "SERVER_SOFTWARE=Webserv");
-	envp[3] = new char[26];
-	strcpy(envp[3],  "GATEWAY_INTERFACE=CGI/1.1");
-	envp[4] = NULL;
-	return envp;
+	Server server = Config::getServer(_port);
+	if (_request.getHeader("Method") == "GET" || _request.getHeader("Method") == "POST")
+	{
+		// cgi에서 사용
+		setenv("REQUEST_METHOD", _request.getHeader("Method").c_str(), 1);
+		// query_string
+		// content_type
+		// content_length
+		// path_info
+		// cig-path뒤에 오는 하위 path
+		LOG_WARNING("수정해야함");
+		std::string pathInfo = _request.getHeader("URI");
+		std::string uriPath = server.getLocation(pathInfo).getUriPath();
+		pathInfo = pathInfo.substr(uriPath.size());
+		pathInfo = pathInfo.substr(0, pathInfo.find("?"));
+		LOG_WARNING("pathInfo: " + pathInfo);
+		setenv("PATH_INFO", pathInfo.c_str(), 1);
+
+		// setenv("AUTH_TYPE", "", 1);
+		setenv("GATEWAY_INTERFACE", "CGI/1.1", 1);
+		setenv("HTTP_ACCEPT", "Accept", 1);
+		setenv("HTTP_ACCEPT_CHARSET", _request.getHeader("Accept-Charset").c_str(), 1);
+		setenv("HTTP_ACCEPT_ENCODING", _request.getHeader("Accept-Encoding").c_str(), 1);
+		setenv("HTTP_ACCEPT_LANGUAGE", _request.getHeader("Accept-Language").c_str(), 1);
+		// setenv("HTTP_FORWARDED", "", 1);
+		setenv("HTTP_HOST", _request.getHeader("Host").c_str(), 1);
+		setenv("HTTP_PROXY_AUTHORIZATION", _request.getHeader("Proxy-Authorization").c_str(), 1);
+		setenv("HTTP_USER_AGENT", _request.getHeader("User-Agent").c_str(), 1);
+		// root + PATH_INFO
+		// setenv("PATH_TRANSLATED", server.getRootPath().c_str(), 1);
+		// 		client ip
+		// setenv("REMOTE_ADDR", "", 1);
+		// host -> client ip
+		// setenv("REMOTE_HOST", "host", 1);
+		setenv("REMOTE_USER", "", 1);
+		// cgi-path
+		// setenv("SCRIPT_NAME", "name", 1);
+		setenv("SERVER_NAME", server.getName().c_str(), 1);
+		setenv("SERVER_PORT", server.getPort().c_str(), 1);
+		setenv("SERVER_PROTOCOL", "HTTP/1.1", 1);
+		setenv("SERVER_SOFTWARE", "42Webserv", 1);
+		setenv("HTTP_COOKIE", _request.getHeader("Cookie").c_str(), 1);
+		// setenv("WEBTOP_USER", "ligin username", 1);
+
+		setenv("MAX_LENGTH", String::Itos(server.getBodySize()).c_str(), 1);
+		setenv("SERVER_ADMIN", "", 1);
+		setenv("DOCUMENT_ROOT", server.getRootPath().c_str(), 1);
+		setenv("HTTP_CONNECTION", _request.getHeader("Connection").c_str(), 1);
+		setenv("HTTP_REFERER", _request.getHeader("Referer").c_str(), 1);
+		setenv("HTTP_PRAGMA", _request.getHeader("Cache-Control").c_str(), 1);
+		setenv("HTTP_KEEP_ALIVE", _request.getHeader("Keep-Alive").c_str(), 1);
+	}
+	if (_request.getHeader("Method") == "GET") {
+		// query_string
+		setenv("QUERY_STRING", "", 1);    
+	}
+	if (_request.getHeader("Method") == "POST" ) {
+		setenv("CONTENT_LENGTH", _request.getHeader("Content-Length").c_str(), 1);
+		setenv("CONTENT_TYPE", _request.getHeader("Content-Type").c_str(), 1);
+	}
+	extern char **environ;
+	return (environ);
+}
+
+void Client::makeCgiResponse()
+{
+	// make response
+	LOG_DEBUG("CGI response parsing");
+	char buffer[BUFFER_SIZE];
+	while (1)
+	{
+		int bytes = ::read(read_fds[0], buffer, BUFFER_SIZE);
+		if (bytes == -1)
+		{
+			LOG_ERROR("Failed to read from pipe");
+			break;
+		}
+		if (bytes == 0)
+		{
+			break;
+		}
+		_response += std::string(buffer, bytes);
+	}
+	// close pipe
+	if (::close(read_fds[0]) == -1)
+	{
+			LOG_ERROR("Failed to close read end of pipe");
+	}
+	setKeepAlive();
 }

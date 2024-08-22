@@ -164,6 +164,7 @@ void Handler::initPathFromLocation() {
 	LOG_DEBUG("Handler::initPathFromLocation: Location: " + _location.getUriPath());
 
 	_filePath = getFilePath(_requestData.uri);
+	LOG_DEBUG("Handler::initPathFromLocation: File path: " + _filePath);
 	if (_filePath.empty())
 	{
 		LOG_WARNING("Handler::initPathFromLocation: File path is empty.");
@@ -221,12 +222,14 @@ std::string Handler::getFilePath(const std::string& uri) {
 	std::string filePath;
 	// CGI 처리
 	if (!_location.getCgiPath().empty()) {
+		LOG_WARNING("CGI Path is Empty");
 		std::string cgiPath = Utils::normalizePath(_location.getCgiPath());
 		size_t lastSlash = uri.find_last_of("/");
 		if (uri.substr(0, lastSlash).find(".") != std::string::npos) {
 			// pathInfo가 존재하는 경우
 			_scriptName = uri.substr(0, lastSlash);
 			_pathInfo = uri.substr(lastSlash);
+			LOG_WARNING("Path Info: " + _pathInfo);
 		} else {
 			_scriptName = uri;
 			_pathInfo = "";
