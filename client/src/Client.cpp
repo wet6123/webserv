@@ -295,10 +295,22 @@ int Client::makeResponse()
 			LOG_FATAL("Failed to execve");
 		} else if (pid > 1) {
 			// parent
-			write(write_fds[1], _request.getBody().c_str(), _request.getBody().size());
+			LOG_DEBUG("_request.getBody(): " + _request.getBody().str());
+			BinaryBuffer body = _request.getBody();
+			while (1) {
+				if (body.size() > 1024) {
+					write(write_fds[1], body.subStr(0, 1024).c_str(), 1024);
+					body.erase(body.begin(), body.begin() + 1024);
+				}
+				else {
+					write(write_fds[1], body.c_str(), body.size());
+					break;
+				}
+			}
 			::close(write_fds[0]);
 			::close(write_fds[1]);
 			::close(read_fds[1]);
+			_request.clear();
 		} else if (pid == -1) {
 			LOG_ERROR("Failed to fork");
 			return 0;
@@ -309,6 +321,7 @@ int Client::makeResponse()
 	{
 		_response = ResponseHandle::makeResponse(_request, _port);
 		setKeepAlive();
+		_request.clear();
 		return 0;
 	}
 }
