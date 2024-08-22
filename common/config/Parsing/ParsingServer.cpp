@@ -120,7 +120,6 @@ void updateLocations(t_vecLocation &locations, Server serv) {
       loc.setOriginalIdxPath(idxPath);
     }
     loc.setIdxPath(root + idxPath);
-	LOG_ERROR("idxPath: " + loc.getIdxPath());
 
     if (!loc.getCgiPath().empty()) {
       loc.setCgiPath(root + loc.getCgiPath());

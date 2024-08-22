@@ -150,7 +150,7 @@ void Handler::initPathFromLocation() {
 
 	if (_server.getRootPath().empty())
 	{
-		LOG_ERROR("Handler::initPathFromLocation: Server root path is empty.");
+		LOG_WARNING("Handler::initPathFromLocation: Server root path is empty.");
 		throw InternalServerError_500;
 	}
 
@@ -166,7 +166,7 @@ void Handler::initPathFromLocation() {
 	_filePath = getFilePath(_requestData.uri);
 	if (_filePath.empty())
 	{
-		LOG_ERROR("Handler::initPathFromLocation: File path is empty.");
+		LOG_WARNING("Handler::initPathFromLocation: File path is empty.");
 		throw InternalServerError_500;
 	}
 
@@ -244,7 +244,7 @@ std::string Handler::getFilePath(const std::string& uri) {
 	LOG_DEBUG("Base path: " + baseFilePath);
 	char buf[PATH_MAX];
 	if (realpath(baseFilePath.c_str(), buf) == NULL) {
-		LOG_ERROR("Handler::getFilePath: realpath failed.");
+		LOG_WARNING("Handler::getFilePath: realpath failed.");
 		throw InternalServerError_500;
 	}
 
@@ -313,11 +313,6 @@ Response Handler::handleRedirect()
  * 
 */
 String::BinaryBuffer Handler::handleGetRequest() {
-
-	// If-Modified-Since 또는 If-None-Match 헤더 처리
-	// etag가 우선순위가 더 높음
-	LOG_DEBUG("ETag: " + _requestData.etag);
-	LOG_DEBUG("If-None-Match: " + _requestData.if_none_match);
 	if (!_requestData.if_none_match.empty() && _requestData.if_none_match == Utils::etag(_filePath))
 	{
 		LOG_DEBUG("ETag Matched");
@@ -388,12 +383,6 @@ String::BinaryBuffer Handler::handleGetRequest() {
 		} else {
 			_response.setHeader("Content-Language", "en-US");
 		}
-		
-		// if (!_requestData.accept_encoding.empty()) {
-		// 	_response.setHeader("Content-Encoding", _requestData.accept_encoding);
-		// } else {
-		// 	_response.setHeader("Content-Encoding", "identity");
-		// }
 
 		_response.setHeader("Content-Disposition", "inline");
 	}
@@ -457,11 +446,11 @@ String::BinaryBuffer Handler::handlePostRequest()
 
 	// 응답 설정
 	_response.setStatusCode(OK_200);
-	LOG_ERROR(_response.getResponses().str());
+	// LOG_ERROR(_response.getResponses().str());
 	_response.setHeader("Content-Length", String::Itos(responseBody.length()));
-	LOG_ERROR(_response.getResponses().str());
+	// LOG_ERROR(_response.getResponses().str());
 	_response.setHeader("Connection", _requestData.connection);
-	LOG_ERROR(_response.getResponses().str());
+	// LOG_ERROR(_response.getResponses().str());
 	_response.setHeader("Server", "42Webserv");
 	_response.setHeader("Content-Type", "text/plain");
 	_response.setHeader("Date", Utils::getCurTime());
@@ -576,10 +565,6 @@ String::BinaryBuffer Handler::handleDeleteRequest()
 	}
 	return _response.getResponses();
 }
-
-// String::BinaryBuffer Handler::handleDownloadRequest() {
-// 	std::string filenName = Utils::getFileName(_filePath);
-// }
 
 } // namespace ResponseHandle
 
