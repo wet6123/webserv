@@ -111,6 +111,7 @@ void WebServer::run()
           }
           else if (byte == 0) {
             client_manager.closeClient(current_event->ident);
+			LOG_INFO("Client closed");
           }
           else if (client_manager.isReqDone(current_event->ident)) {
             LOG_DEBUG("Request parsing Done");
@@ -119,18 +120,18 @@ void WebServer::run()
             if (pid > 1) {
               // cgi
               _pidList[pid] = current_event->ident;
-              LOG_DEBUG("CGI response making");
-              LOG_INFO("CGI pid: " + std::to_string(pid));
+            //   LOG_DEBUG("CGI response making");
+            //   LOG_INFO("CGI pid: " + std::to_string(pid));
               addChangeList(current_event->ident, EVFILT_READ, EV_DISABLE, 0, 0, NULL);
               addChangeList(pid, EVFILT_PROC, EV_ADD, NOTE_EXIT, 0, NULL);
             }
             else if (pid == 0) {
               // normal response
-              LOG_DEBUG("Normal response making");
+            //   LOG_DEBUG("Normal response making");
               addChangeList(current_event->ident, EVFILT_READ, EV_DISABLE, 0, 0, NULL);
               addChangeList(current_event->ident, EVFILT_WRITE, EV_ENABLE, 0, 0, NULL);
             } else {
-              LOG_ERROR("Failed to make response");
+            //   LOG_ERROR("Failed to make response");
             }
           }
           else {

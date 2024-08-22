@@ -5,6 +5,9 @@
 #ifndef PATH_MAX
 # define PATH_MAX 1024
 #endif
+#ifndef SOMAXCONN
+# define SOMAXCONN 128
+#endif
 
 /* #region typedef */
 	typedef int FD;
