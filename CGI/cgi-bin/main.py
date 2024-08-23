@@ -4,6 +4,7 @@ import os
 import cgi
 import cgitb
 import sys
+import datetime
 from html import escape
 from http import cookies, HTTPStatus
 from files import list_files, download_file, delete_file
@@ -25,11 +26,18 @@ def get_env():
 
 def print_response(response_body, status_code=HTTPStatus.OK, content_type='text/html', cookie_string=None):
     # Print the HTTP header
-    print(f"Status: {status_code.value} {status_code.phrase}")
+    print(f"HTTP/1.1 {status_code.value} {status_code.phrase}")
+    print(f"Connection: {os.environ.get('HTTP_CONNECTION', os.environ.get('CONNECTION', 'close'))}")
+    print(f"Content-Disposition: inline")
+    if ( os.environ.get("REQUEST_METHOD", "GET") == "POST"):
+        print(f"Content-Length: {len(response_body)}")
     print(f"Content-Type: {content_type}")
     if cookie_string:
         for cookie in cookie_string:
             print(f"Set-Cookie: {cookie}")
+    now = datetime.datetime.now(datetime.timezone.utc)
+    print(f"Date: {now.strftime('%a, %d %b %Y %H:%M:%S %Z')}")
+    print(f"Server: {os.environ.get("SERVER_SOFTWARE", "Webserv")}")
     print()
     print(response_body)
 
