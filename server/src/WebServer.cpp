@@ -82,7 +82,7 @@ void WebServer::run()
 
       LOG_DEBUG("Event: " + std::to_string(i) + " Ident: " + std::to_string(current_event->ident) + " Filter: " + std::to_string(current_event->filter) + " Actions: " + std::to_string(current_event->flags));
       if (current_event->flags & EV_ERROR) {
-        LOG_WARNING("Error on event. Ident: " + std::to_string(current_event->ident) + " " + strerror(errno));
+        LOG_WARNING("Error on event. Ident: " + std::to_string(current_event->ident));
       }
 
       if (current_event->filter == EVFILT_READ) {

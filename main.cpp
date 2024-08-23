@@ -10,6 +10,7 @@ int main(int argc, char *argv[])
 	signal(SIGKILL, SIG_IGN);
 	signal(SIGQUIT, SIG_IGN);
 	signal(SIGTERM, SIG_IGN);
+  signal(SIGPIPE, SIG_IGN);
   ErrorLog::setLogLevel(ErrorLog::INFO);
 	ResponseHandle::Utils::setReasonPhrase();
   if (argc >= 2) {

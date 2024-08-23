@@ -52,7 +52,7 @@ int Client::send()
 		else
 			size = _response.size();
 		// LOG_WARNING("Response: " + _response.subStr(0, size).str());
-		bytes = ::send(_socket, _response.subStr(0, size).c_str(), size, MSG_NOSIGNAL);
+		bytes = ::send(_socket, _response.subStr(0, size).c_str(), size, 0);
 		if (bytes == -1)
 		{
 			throw ClientException("Failed to send data");
@@ -74,7 +74,7 @@ int Client::send(time_t timeout)
 int Client::receive(size_t size)
 {
 	char buffer[size];
-	int bytes = ::recv(_socket, buffer, size,  MSG_NOSIGNAL);
+	int bytes = ::recv(_socket, buffer, size,  0);
 	if (bytes == -1)
 	{
 		return -1;
@@ -104,7 +104,7 @@ int Client::receive(size_t size)
 int Client::receive()
 {
 	char buffer[BUFFER_SIZE];
-	int bytes = ::recv(_socket, buffer, BUFFER_SIZE, MSG_NOSIGNAL);
+	int bytes = ::recv(_socket, buffer, BUFFER_SIZE, 0);
 	if (bytes == -1)
 	{
 		return -1;

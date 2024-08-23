@@ -23,6 +23,7 @@ bool ClientManager::isClient(FD client_fd) {
 void ClientManager::closeClient(FD client_fd) {
   if (_clientList.find(client_fd) != _clientList.end()) {
     _clientList[client_fd]->close();
+    delete _clientList[client_fd];
     _clientList.erase(client_fd);
     LOG_DEBUG("Client closed. fd: " + std::to_string(client_fd));
   }
