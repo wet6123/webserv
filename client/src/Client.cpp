@@ -425,11 +425,6 @@ char **Client::makeEnvp(std::string pathInfo)
 		setenv("HTTP_PRAGMA", _request.getHeader("Cache-Control").c_str(), 1);
 		setenv("HTTP_KEEP_ALIVE", _request.getHeader("Keep-Alive").c_str(), 1);
 	}
-	// if (_request.getHeader("Method") == "GET") {
-	// 	// query_string
-	// 	// ?
-	// 	setenv("QUERY_STRING", "", 1);
-	// }
 	if (_request.getHeader("Method") == "POST" ) {
 		setenv("CONTENT_LENGTH", _request.getHeader("Content-Length").c_str(), 1);
 		setenv("CONTENT_TYPE", _request.getHeader("Content-Type").c_str(), 1);
