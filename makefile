@@ -1,5 +1,5 @@
 NAME	= WebServer
-CXXFLAG = -Wall -Wextra -Werror -std=c++98 -fsanitize=address -g
+CXXFLAG = -Wall -Wextra -Werror -std=c++98
 CXX		= c++
 # ===============================================
 # Source Directories

@@ -210,147 +210,154 @@ bool Client::hasResponse() const
 
 int Client::makeResponse()
 {
-	if (isCgi())
+	if (_status != OK_200)
 	{
-		// make pipe
-		if (pipe(read_fds) == -1 || pipe(write_fds) == -1)
+		_response = ErrorResponse::getErrorResponse(_status, _port);
+		return 0;
+	} else {
+		if (isCgi())
 		{
-			LOG_ERROR("Failed to make pipe");
-			return -1;
-		}
-
-		// set pipe nonblock
-		int flags = fcntl(read_fds[0], F_GETFL, 0);
-		fcntl(read_fds[0], F_SETFL, flags | O_NONBLOCK);
-		flags = fcntl(read_fds[1], F_GETFL, 0);
-		fcntl(read_fds[1], F_SETFL, flags | O_NONBLOCK);
-
-		flags = fcntl(write_fds[0], F_GETFL, 0);
-		fcntl(write_fds[0], F_SETFL, flags | O_NONBLOCK);
-		flags = fcntl(write_fds[1], F_GETFL, 0);
-		fcntl(write_fds[1], F_SETFL, flags | O_NONBLOCK);
-
-		// close useless pipe
-		// set arg
-		Server server;
-		try {
-			server = Config::getServer(_port);
-		}
-		catch (const Status &e) {
-			LOG_FATAL("Request::Request: Error getting server body size: " + String::Itos(e));
-		}
-		std::string uri = _request.getHeader("URI");
-		// LOG_FATAL("URI: " + uri);
-		Location location;
-		try {
-			location = server.getLocation(uri);
-
-			LOG_WARNING("Location: " + location.getUriPath());
-			LOG_WARNING("Location: " + location.getCgiPath());
-		}
-		catch (const Status &e) {
-			LOG_FATAL("Request::Request: Error getting server location: " + String::Itos(e));
-		}
-		std::string cgiPath;
-		std::string pathInfo;
-		LOG_WARNING(location.getUriPath());
-		LOG_WARNING(location.getCgiPath());
-		if (location.getIsRegex()) {
-			std::string extension = ResponseHandle::Utils::getFileExtension(uri);
-			if (extension.empty()) {
-				LOG_ERROR("Failed to get extension");
-				return 0;
+			// make pipe
+			if (pipe(read_fds) == -1 || pipe(write_fds) == -1)
+			{
+				LOG_ERROR("Failed to make pipe");
+				return -1;
 			}
-			LOG_WARNING("Extension: " + extension);
-			LOG_WARNING("URI: " + uri);
-			std::string tmp = location.getCgiPath();
-			cgiPath = location.getCgiPath() + uri.substr(0, uri.find(".") + 1 + extension.size());
-			pathInfo = uri.substr(uri.find(".") + 1 + extension.size());
-		}
-		else {
-			if (uri.length() < location.getUriPath().length()) {
-				pathInfo = "";
-				cgiPath = location.getCgiPath();
+
+			// set pipe nonblock
+			int flags = fcntl(read_fds[0], F_GETFL, 0);
+			fcntl(read_fds[0], F_SETFL, flags | O_NONBLOCK);
+			flags = fcntl(read_fds[1], F_GETFL, 0);
+			fcntl(read_fds[1], F_SETFL, flags | O_NONBLOCK);
+
+			flags = fcntl(write_fds[0], F_GETFL, 0);
+			fcntl(write_fds[0], F_SETFL, flags | O_NONBLOCK);
+			flags = fcntl(write_fds[1], F_GETFL, 0);
+			fcntl(write_fds[1], F_SETFL, flags | O_NONBLOCK);
+
+			// close useless pipe
+			// set arg
+			Server server;
+			try {
+				server = Config::getServer(_port);
+			}
+			catch (const Status &e) {
+				LOG_FATAL("Request::Request: Error getting server body size: " + String::Itos(e));
+			}
+			std::string uri = _request.getHeader("URI");
+			// LOG_FATAL("URI: " + uri);
+			Location location;
+			try {
+				location = server.getLocation(uri);
+
+				LOG_WARNING("Location: " + location.getUriPath());
+				LOG_WARNING("Location: " + location.getCgiPath());
+			}
+			catch (const Status &e) {
+				LOG_FATAL("Request::Request: Error getting server location: " + String::Itos(e));
+			}
+			std::string cgiPath;
+			std::string pathInfo;
+			LOG_WARNING(location.getUriPath());
+			LOG_WARNING(location.getCgiPath());
+			if (location.getIsRegex()) {
+				std::string extension = ResponseHandle::Utils::getFileExtension(uri);
+				if (extension.empty()) {
+					LOG_ERROR("Failed to get extension");
+					return 0;
+				}
+				LOG_WARNING("Extension: " + extension);
+				LOG_WARNING("URI: " + uri);
+				std::string tmp = location.getCgiPath();
+				cgiPath = location.getCgiPath() + uri.substr(0, uri.find(".") + 1 + extension.size());
+				pathInfo = uri.substr(uri.find(".") + 1 + extension.size());
 			}
 			else {
-				LOG_WARNING("!!!!!!!!!!!!!!!!!!!!!!!!");
-				size_t pos = uri.find(".");
-				if (pos == std::string::npos) {
+				if (uri.length() < location.getUriPath().length()) {
 					pathInfo = "";
-				}
-				LOG_WARNING("URI: " + uri);
-				pathInfo = uri.substr(location.getUriPath().length());
-				cgiPath = location.getCgiPath();
-			}
-
-		}
-
-		// std::string cgiPath = location.getCgiPath();
-		LOG_WARNING("CGI Path: " + cgiPath);
-		LOG_WARNING("Path Info: " + pathInfo);
-		const char *filename = cgiPath.c_str();
-		char **argv = makeArgv(cgiPath);
-		char **envp = makeEnvp(pathInfo);
-
-		// print arg
-		// LOG_INFO("CGI filename: " + std::string(filename));
-		// for (int i = 0; argv[i] != NULL; i++)
-		// 	LOG_INFO("CGI argv[" + std::to_string(i) + "]: " + std::string(argv[i]));
-		// for (int i = 0; envp[i] != NULL; i++)
-		// 	LOG_INFO("CGI envp[" + std::to_string(i) + "]: " + std::string(envp[i]));
-
-		// fork
-		int pid = fork();
-		LOG_INFO("CGI pid: " + std::to_string(pid));
-		
-		if (pid == 0) {
-			// child
-			::dup2(read_fds[1], STDOUT_FILENO);
-			::dup2(write_fds[0], STDIN_FILENO);
-			::close(read_fds[0]);
-			::close(read_fds[1]);
-			::close(write_fds[0]);
-			::close(write_fds[1]);
-			execve(filename, argv, envp);
-			Response response;
-			response.setHeader("Content-Type", "text/html");
-			response.setStatusCode(InternalServerError_500);
-			std::string body = "Internal Server Error 500";
-			response.setHeader("Content-Length", String::Itos(body.size()));
-			response.setHeader("Connection", "close");
-			response.setBody(body);
-			std::cout << response.getResponses();
-			exit(1);
-		} else if (pid > 1) {
-			// parent
-			LOG_DEBUG("_request.getBody(): " + _request.getBody().str());
-			BinaryBuffer body = _request.getBody();
-			while (1) {
-				if (body.size() > 1024) {
-					write(write_fds[1], body.subStr(0, 1024).c_str(), 1024);
-					body.erase(body.begin(), body.begin() + 1024);
+					cgiPath = location.getCgiPath();
 				}
 				else {
-					write(write_fds[1], body.c_str(), body.size());
-					break;
+					LOG_WARNING("!!!!!!!!!!!!!!!!!!!!!!!!");
+					size_t pos = uri.find(".");
+					if (pos == std::string::npos) {
+						pathInfo = "";
+					}
+					LOG_WARNING("URI: " + uri);
+					pathInfo = uri.substr(location.getUriPath().length());
+					cgiPath = location.getCgiPath();
 				}
+
 			}
-			::close(write_fds[0]);
-			::close(write_fds[1]);
-			::close(read_fds[1]);
+
+			// std::string cgiPath = location.getCgiPath();
+			cgiPath = ResponseHandle::Utils::normalizePath(cgiPath);
+			LOG_WARNING("CGI Path: " + cgiPath);
+			LOG_WARNING("Path Info: " + pathInfo);
+			const char *filename = cgiPath.c_str();
+
+			// print arg
+			// LOG_INFO("CGI filename: " + std::string(filename));
+			// for (int i = 0; argv[i] != NULL; i++)
+			// 	LOG_INFO("CGI argv[" + std::to_string(i) + "]: " + std::string(argv[i]));
+			// for (int i = 0; envp[i] != NULL; i++)
+			// 	LOG_INFO("CGI envp[" + std::to_string(i) + "]: " + std::string(envp[i]));
+
+			// fork
+			int pid = fork();
+			LOG_INFO("CGI pid: " + std::to_string(pid));
+			
+			if (pid == 0) {
+				// child
+				char **argv = makeArgv(cgiPath);
+				char **envp = makeEnvp(pathInfo);
+				::dup2(read_fds[1], STDOUT_FILENO);
+				::dup2(write_fds[0], STDIN_FILENO);
+				::close(read_fds[0]);
+				::close(read_fds[1]);
+				::close(write_fds[0]);
+				::close(write_fds[1]);
+				execve(filename, argv, envp);
+				Response response;
+				response.setHeader("Content-Type", "text/html");
+				response.setStatusCode(InternalServerError_500);
+				std::string body = "Internal Server Error 500";
+				response.setHeader("Content-Length", String::Itos(body.size()));
+				response.setHeader("Connection", "close");
+				response.setBody(body);
+				std::cout << response.getResponses();
+				exit(1);
+			} else if (pid > 1) {
+				// parent
+				LOG_DEBUG("_request.getBody(): " + _request.getBody().str());
+				BinaryBuffer body = _request.getBody();
+				while (1) {
+					if (body.size() > 1024) {
+						write(write_fds[1], body.subStr(0, 1024).c_str(), 1024);
+						body.erase(body.begin(), body.begin() + 1024);
+					}
+					else {
+						write(write_fds[1], body.c_str(), body.size());
+						break;
+					}
+				}
+				::close(write_fds[0]);
+				::close(write_fds[1]);
+				::close(read_fds[1]);
+				_request.clear();
+			} else if (pid == -1) {
+				LOG_ERROR("Failed to fork");
+				return 0;
+			}
+			return pid;
+		}
+		else
+		{
+			_response = ResponseHandle::makeResponse(_request, _port);
+			setKeepAlive();
 			_request.clear();
-		} else if (pid == -1) {
-			LOG_ERROR("Failed to fork");
 			return 0;
 		}
-		return pid;
-	}
-	else
-	{
-		_response = ResponseHandle::makeResponse(_request, _port);
-		setKeepAlive();
-		_request.clear();
-		return 0;
 	}
 }
 
@@ -378,16 +385,9 @@ char **Client::makeEnvp(std::string pathInfo)
 		// cig-path뒤에 오는 하위 path
 		LOG_WARNING("수정해야함");
 		LOG_WARNING("pathInfo: " + pathInfo);
+		LOG_WARNING("query: " + _request.getHeader("Query"));
 		if (_request.getHeader("Method") == "GET") {
-			size_t pos = pathInfo.find("?");
-			if (pos != std::string::npos) {
-				setenv("QUERY_STRING", pathInfo.substr(pos + 1).c_str(), 1);
-				pathInfo = pathInfo.substr(0, pos);
-			}
-			else {
-				setenv("QUERY_STRING", "", 1);
-			}
-
+			setenv("QUERY_STRING", _request.getHeader("Query").c_str(), 1);
 		}
 		setenv("PATH_INFO", pathInfo.c_str(), 1);
 

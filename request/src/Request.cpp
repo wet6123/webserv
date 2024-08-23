@@ -238,10 +238,11 @@ void Request::parseRequestLine(const std::string& line) {
 	}
 	int allowMethod;
 	try {
-		std::string query = uri.substr(uri.find("?") + 1);
-		setHeader("Query", query);
-		if (uri.find("?") != std::string::npos)
+		if (uri.find("?") != std::string::npos) {
+			std::string query = uri.substr(uri.find("?") + 1);
+			setHeader("Query", query);
 			uri = uri.substr(0, uri.find("?"));
+		}
 		LOG_WARNING("Request::parseRequestLine: " + uri);
 		allowMethod = Config::getServer(_port).getLocation(uri).getMethods();
 	}

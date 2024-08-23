@@ -59,7 +59,7 @@ def upload_file(username):
                 f.write(file_item.file.read())
 
             # HTML response for successful upload
-            response_body = f"<html><body><h2>File {original_filename} uploaded successfully in {file_path}.</h2></body></html>"
+            response_body = f"<html><body><h2>File {original_filename} uploaded successfully in {file_path}.</h2><button type=\"button\" onclick=\"location.href='/main'\">Home</button></body></html>"
             status_code = HTTPStatus.OK
         except Exception as e:
             response_body = f"<html><body><h2>Error uploading file: {e}</h2></body></html>"
