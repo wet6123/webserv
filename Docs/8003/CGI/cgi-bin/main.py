@@ -7,10 +7,12 @@ import sys
 import datetime
 from html import escape
 from http import cookies, HTTPStatus
-from files import list_files, download_file, delete_file
+from files import list_files, download_file, delete_file, download
 from upload import upload_file
 from database import load_users
 from urllib.parse import parse_qs
+from login import login_user
+from register import register
 
 # Enable debugging
 cgitb.enable()
@@ -100,6 +102,12 @@ def main():
         if request_method == "POST":
             if path_info == "/upload":
                 response_body, status_code = upload_file(username)
+            elif path_info == "/login":
+                login_user()
+            elif path_info == "/register":
+                register()
+            elif path_info == "/files":
+                download()
             else:
                 response_body, status_code = load_html(notfound_html_path)
                 status_code = HTTPStatus.NOT_FOUND
@@ -111,19 +119,31 @@ def main():
             elif path_info == "/calculator":
                 response_body, status_code = load_html(calc_html_path)
             elif path_info == "/upload":
-                response_body, status_code = load_html(upload_html_path)
+                if username is not None:
+                    response_body, status_code = load_html(upload_html_path)
+                else:
+                    response_body, status_code = load_html(login_html_path)
             elif "download" in query_string:
-                filename = parse_qs(query_string).get("download", [None])[0]
-                if filename:
-                    download_file(username, filename)
-                    return  # download_file 함수 내부에서 응답을 이미 처리합니다.
+                if username is not None:
+                    filename = parse_qs(query_string).get("download", [None])[0]
+                    if filename:
+                        download_file(username, filename)
+                        return  # download_file 함수 내부에서 응답을 이미 처리합니다.
+                else:
+                    response_body, status_code = load_html(login_html_path)
             elif "delete" in query_string:
-                filename = parse_qs(query_string).get("delete", [None])[0]
-                if filename:
-                    delete_file(username, filename)
-                    return  # delete_file 함수 내부에서 응답을 이미 처리합니다.
+                if username is not None:
+                    filename = parse_qs(query_string).get("delete", [None])[0]
+                    if filename:
+                        delete_file(username, filename)
+                        return  # delete_file 함수 내부에서 응답을 이미 처리합니다.
+                else:
+                    response_body, status_code = load_html(login_html_path)
             elif path_info == "/files":
-                response_body, status_code = list_files(username)
+                if username is not None:
+                    response_body, status_code = list_files(username)
+                else:
+                    response_body, status_code = load_html(login_html_path)
             elif path_info == "":
                 response_body = "<html><body><h1>Hello, CGI!</h1>\
                     <div><button type=\"button\" onclick=\"location.href='/main/login'\">Login</button></div>\
