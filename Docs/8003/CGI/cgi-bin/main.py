@@ -86,6 +86,7 @@ def main():
         register_html_path = os.path.join(base_dir, '../html/register.html')
         calc_html_path = os.path.join(base_dir, '../html/calc.html')
         upload_html_path = os.path.join(base_dir, '../html/upload.html')
+        notfound_html_path = os.path.join(base_dir, '../html/404.html')
 
         # Default status code
         status_code = HTTPStatus.OK
@@ -100,10 +101,8 @@ def main():
             if path_info == "/upload":
                 response_body, status_code = upload_file(username)
             else:
-                content_length = int(content_length)
-                post_data = sys.stdin.read(content_length)
-                response_body = "<html><body><h1>POST Data</h1><pre>{}</pre></body></html>".format(escape(post_data))
-                status_code = HTTPStatus.OK
+                response_body, status_code = load_html(notfound_html_path)
+                status_code = HTTPStatus.NOT_FOUND
         else:
             if path_info == "/login":
                 response_body, status_code = load_html(login_html_path)
@@ -123,14 +122,21 @@ def main():
                 if filename:
                     delete_file(username, filename)
                     return  # delete_file 함수 내부에서 응답을 이미 처리합니다.
-            elif path_info == "/list_files":
+            elif path_info == "/files":
                 response_body, status_code = list_files(username)
-            else:
+            elif path_info == "":
                 response_body = "<html><body><h1>Hello, CGI!</h1>\
-                    <div><button type=\"button\" onclick=\"location.href='main/upload'\">move to upload</button></div>\
-                    <div><button type=\"button\" onclick=\"location.href='main/calculator'\">move to calculator</button></div>\
+                    <div><button type=\"button\" onclick=\"location.href='/main/login'\">Login</button></div>\
+                    <div><button type=\"button\" onclick=\"location.href='/main/register'\">Register</button></div>\
+                    <div><button type=\"button\" onclick=\"location.href='/main/calculator'\">Calculator</button></div>\
+                    <div><button type=\"button\" onclick=\"location.href='/main/upload'\">Upload</button></div>\
+                    <div><button type=\"button\" onclick=\"location.href='/main/files'\">Download</button></div>\
                     <p>{}</p></body></html>".format(escape(query_string))
                 status_code = HTTPStatus.OK
+            else:
+                response_body, status_code = load_html(notfound_html_path)
+                status_code = HTTPStatus.NOT_FOUND
+
 
         print_response(response_body, status_code, cookie_string=cookie_set)
 
