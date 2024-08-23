@@ -8,7 +8,6 @@
 #include "../FileSystem.hpp"
 #include "../String.hpp"
 
-
 namespace FileSystem {
 
 	FolderInfo getFolderInfo(const std::string& path) {
@@ -53,5 +52,4 @@ namespace FileSystem {
 		// 기타 사용자 확인
 		return (info.st_mode & S_IROTH) && (info.st_mode & S_IXOTH);
 	}
-
 }

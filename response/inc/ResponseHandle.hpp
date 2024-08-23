@@ -16,37 +16,35 @@
 namespace ResponseHandle {
 
 	String::BinaryBuffer makeResponse(const Request& request, const std::string& port);
+	class Handler {
+	public:
+		Handler(const Request& request, const std::string& port);
+		String::BinaryBuffer makeResponse();
 
-class Handler {
-public:
-    Handler(const Request& request, const std::string& port);
-	String::BinaryBuffer makeResponse();
+	private:
+		void requestInit();
+		std::string getFilePath(const std::string& uri);
+		Response handleRedirect();
+		String::BinaryBuffer handleGetRequest();
+		String::BinaryBuffer handleDeleteRequest();
+		String::BinaryBuffer handlePostRequest();
+		String::BinaryBuffer handleDownloadRequest();
+		void handleAutoIndex(const std::string& servRoot);
+		void initPathFromLocation();
+		Method getMethodNum(const std::string& method);
 
-private:
-	void requestInit();
-	std::string getFilePath(const std::string& uri);
-    Response handleRedirect();
-    String::BinaryBuffer handleGetRequest();
-    String::BinaryBuffer handleDeleteRequest();
-    String::BinaryBuffer handlePostRequest();
-	String::BinaryBuffer handleDownloadRequest();
-    void handleAutoIndex(const std::string& servRoot);
-    void initPathFromLocation();
-    Method getMethodNum(const std::string& method);
-
-    const Request& _request;
-    Server _server;
-    Response _response;
-    Location _location;
-    std::string _rootPath;
-    std::string _filePath;
-    std::string _query;
-    std::string _pathInfo;
-    std::string _scriptName;
-	const std::string &_port;
-	RequestData _requestData;
-};
-
+		const Request& _request;
+		Server _server;
+		Response _response;
+		Location _location;
+		std::string _rootPath;
+		std::string _filePath;
+		std::string _query;
+		std::string _pathInfo;
+		std::string _scriptName;
+		const std::string &_port;
+		RequestData _requestData;
+	};
 } // namespace ResponseHandle
 
 #endif // RESPONSEHANDLE_HPP

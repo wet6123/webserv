@@ -11,10 +11,10 @@
 #define DEFAULT_CONF_PATH "common/config/default.conf"
 
 namespace Config {
-  void init(std::string path);
-  void printConfig();
-  std::vector<Server> getServers();
-  const Server& getServer(std::string port);
+	void init(std::string path);
+	void printConfig();
+	std::vector<Server> getServers();
+	const Server& getServer(std::string port);
 }
 
 #endif

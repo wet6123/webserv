@@ -4,14 +4,14 @@
 Location::Location() { }
 Location::Location(const Location &loc) { *this = loc; }
 Location::Location(const LocationData &data) {
-  locationData = data;
+	locationData = data;
 }
 
 Location &Location::operator=(const Location &loc) {
-  if (this != &loc) {
-    locationData = loc.locationData;
-  }
-  return *this;
+	if (this != &loc) {
+		locationData = loc.locationData;
+	}
+	return *this;
 }
 Location::~Location() {}
 

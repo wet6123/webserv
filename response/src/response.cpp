@@ -2,7 +2,6 @@
 
 Response::Response() : _version("HTTP/1.1"), _status(OK_200)  {}
 
-
 Response::Response(const Response &other) {
 	_version = other._version;
 	_status = other._status;
@@ -11,8 +10,7 @@ Response::Response(const Response &other) {
 	_reason = other._reason;
 }
 
-Response &Response::operator=(const Response &other)
-{
+Response &Response::operator=(const Response &other) {
 	if (this != &other)
 	{
 		_version = other._version;
@@ -115,4 +113,3 @@ std::vector<std::string> Response::getHeaderValues(const std::string &name) cons
 	}
 	return values;
 }
-
