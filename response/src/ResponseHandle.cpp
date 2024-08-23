@@ -181,6 +181,7 @@ void Handler::initPathFromLocation() {
 			if (dir == NULL && errno == EACCES) {
 				throw Forbidden_403;
 			}
+			closedir(dir);
 			LOG_DEBUG(_location.getOriginalIdxPath());
 			std::string idxPath = _location.getOriginalIdxPath().empty() ? _server.getIdxPath() : _location.getOriginalIdxPath();
 			std::string tmpPath = _filePath + idxPath;
