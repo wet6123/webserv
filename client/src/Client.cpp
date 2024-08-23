@@ -1,6 +1,6 @@
 #include "../inc/Client.hpp"
 
-Client::Client(FD socket, const std::string &port) : _socket(socket), _port(port), _request(port), _status(OK_200)
+Client::Client(FD socket, const std::string port) : _socket(socket), _port(port), _request(port), _status(OK_200)
 {
 }
 
@@ -30,6 +30,7 @@ void Client::close()
 {
 	if (_socket != -1)
 	{
+		::shutdown(_socket, SHUT_RDWR);
 		::close(_socket);
 		_socket = -1;
 	}
@@ -42,21 +43,21 @@ void Client::close()
 */
 int Client::send()
 {
-	if (_status != OK_200)
-	{
-		_response = ErrorResponse::getErrorResponse(_status, _port);
-	} else {
-		_response = ResponseHandle::makeResponse(_request, _port);
-	}
-	std::cout << "response: " << _response << std::endl;
 	int bytes = 0;
-	if (_socket != -1)
+	if (_socket != -1 && _response.size() > 0)
 	{
-		bytes = ::send(_socket, _response.c_str(), _response.size(), MSG_NOSIGNAL);
+		int size = 0;
+		if (_response.size() >= 1024)
+			size = 1024;
+		else
+			size = _response.size();
+		// LOG_WARNING("Response: " + _response.subStr(0, size).str());
+		bytes = ::send(_socket, _response.subStr(0, size).c_str(), size, MSG_NOSIGNAL);
 		if (bytes == -1)
 		{
 			throw ClientException("Failed to send data");
 		}
+		_response.erase(_response.begin(), _response.begin() + bytes);
 	}
 	return bytes;
 }
@@ -92,7 +93,6 @@ int Client::receive(size_t size)
 	} catch (const Status& e) {
 		// _request.clear();
 		_status = e;
-		LOG_FATAL("Error parsing request: " + String::Itos(e));
 	} catch (const std::exception& e) {
 		LOG_ERROR("Unexpected error during parsing: " + std::string(e.what()));
 		_request.clear();
@@ -103,8 +103,8 @@ int Client::receive(size_t size)
 
 int Client::receive()
 {
-	char buffer[10];
-	int bytes = ::recv(_socket, buffer, 10,  MSG_NOSIGNAL);
+	char buffer[BUFFER_SIZE];
+	int bytes = ::recv(_socket, buffer, BUFFER_SIZE, MSG_NOSIGNAL);
 	if (bytes == -1)
 	{
 		return -1;
@@ -132,15 +132,14 @@ int Client::receive()
 	return bytes;
 }
 
-bool Client::isDone() const
+bool Client::isReqDone() const
 {
-	std::cout << "isDone: " << _request.isDone() << std::endl;
 	return _request.isDone();
 }
 
-bool Client::isClientFD(FD fd) const
+bool Client::isResDone() const
 {
-	return _socket == fd;
+	return _response.size() == 0;
 }
 
 void Client::setTimeOut(time_t sec)
@@ -177,7 +176,291 @@ bool Client::isTimeout() const
 	return time(NULL) - _start > _timeout;
 }
 
+void Client::setKeepAlive()
+{
+	_keepAlive = _response.str().find("Connection: keep-alive") != std::string::npos;
+}
+
 bool Client::isKeepAlive() const
 {
-	return _response.str().find("Connection: keep-alive") != std::string::npos;
+	return _keepAlive;
+}
+
+bool Client::isCgi() const
+{
+	Server server = Config::getServer(_port);
+	Location location;
+	try {
+		location = server.getLocation(_request.getHeader("URI"));
+
+	}
+	catch (const Status &e) {
+		return false;
+	}
+	std::string cgiPath = location.getCgiPath();
+	if (cgiPath.empty())
+		return false;
+	return true;
+}
+
+bool Client::hasResponse() const
+{
+	return !_response.empty();
+}
+
+int Client::makeResponse()
+{
+	if (_status != OK_200)
+	{
+		_response = ErrorResponse::getErrorResponse(_status, _port);
+		return 0;
+	} else {
+		if (isCgi())
+		{
+			// make pipe
+			if (pipe(read_fds) == -1 || pipe(write_fds) == -1)
+			{
+				LOG_ERROR("Failed to make pipe");
+				return -1;
+			}
+
+			// set pipe nonblock
+			int flags = fcntl(read_fds[0], F_GETFL, 0);
+			fcntl(read_fds[0], F_SETFL, flags | O_NONBLOCK);
+			flags = fcntl(read_fds[1], F_GETFL, 0);
+			fcntl(read_fds[1], F_SETFL, flags | O_NONBLOCK);
+
+			flags = fcntl(write_fds[0], F_GETFL, 0);
+			fcntl(write_fds[0], F_SETFL, flags | O_NONBLOCK);
+			flags = fcntl(write_fds[1], F_GETFL, 0);
+			fcntl(write_fds[1], F_SETFL, flags | O_NONBLOCK);
+
+			// close useless pipe
+			// set arg
+			Server server;
+			try {
+				server = Config::getServer(_port);
+			}
+			catch (const Status &e) {
+				LOG_FATAL("Request::Request: Error getting server body size: " + String::Itos(e));
+			}
+			std::string uri = _request.getHeader("URI");
+			// LOG_FATAL("URI: " + uri);
+			Location location;
+			try {
+				location = server.getLocation(uri);
+
+				LOG_WARNING("Location: " + location.getUriPath());
+				LOG_WARNING("Location: " + location.getCgiPath());
+			}
+			catch (const Status &e) {
+				LOG_FATAL("Request::Request: Error getting server location: " + String::Itos(e));
+			}
+			std::string cgiPath;
+			std::string pathInfo;
+			LOG_WARNING(location.getUriPath());
+			LOG_WARNING(location.getCgiPath());
+			if (location.getIsRegex()) {
+				std::string extension = ResponseHandle::Utils::getFileExtension(uri);
+				if (extension.empty()) {
+					LOG_ERROR("Failed to get extension");
+					return 0;
+				}
+				LOG_WARNING("Extension: " + extension);
+				LOG_WARNING("URI: " + uri);
+				std::string tmp = location.getCgiPath();
+				cgiPath = location.getCgiPath() + uri.substr(0, uri.find(".") + 1 + extension.size());
+				pathInfo = uri.substr(uri.find(".") + 1 + extension.size());
+			}
+			else {
+				if (uri.length() < location.getUriPath().length()) {
+					pathInfo = "";
+					cgiPath = location.getCgiPath();
+				}
+				else {
+					LOG_WARNING("!!!!!!!!!!!!!!!!!!!!!!!!");
+					size_t pos = uri.find(".");
+					if (pos == std::string::npos) {
+						pathInfo = "";
+					}
+					LOG_WARNING("URI: " + uri);
+					pathInfo = uri.substr(location.getUriPath().length());
+					cgiPath = location.getCgiPath();
+				}
+
+			}
+
+			// std::string cgiPath = location.getCgiPath();
+			cgiPath = ResponseHandle::Utils::normalizePath(cgiPath);
+			LOG_WARNING("CGI Path: " + cgiPath);
+			LOG_WARNING("Path Info: " + pathInfo);
+			const char *filename = cgiPath.c_str();
+
+			// print arg
+			// LOG_INFO("CGI filename: " + std::string(filename));
+			// for (int i = 0; argv[i] != NULL; i++)
+			// 	LOG_INFO("CGI argv[" + std::to_string(i) + "]: " + std::string(argv[i]));
+			// for (int i = 0; envp[i] != NULL; i++)
+			// 	LOG_INFO("CGI envp[" + std::to_string(i) + "]: " + std::string(envp[i]));
+
+			// fork
+			int pid = fork();
+			LOG_INFO("CGI pid: " + std::to_string(pid));
+			
+			if (pid == 0) {
+				// child
+				char **argv = makeArgv(cgiPath);
+				char **envp = makeEnvp(pathInfo);
+				::dup2(read_fds[1], STDOUT_FILENO);
+				::dup2(write_fds[0], STDIN_FILENO);
+				::close(read_fds[0]);
+				::close(read_fds[1]);
+				::close(write_fds[0]);
+				::close(write_fds[1]);
+				execve(filename, argv, envp);
+				Response response;
+				response.setHeader("Content-Type", "text/html");
+				response.setStatusCode(InternalServerError_500);
+				std::string body = "Internal Server Error 500";
+				response.setHeader("Content-Length", String::Itos(body.size()));
+				response.setHeader("Connection", "close");
+				response.setBody(body);
+				std::cout << response.getResponses();
+				exit(1);
+			} else if (pid > 1) {
+				// parent
+				LOG_DEBUG("_request.getBody(): " + _request.getBody().str());
+				BinaryBuffer body = _request.getBody();
+				while (1) {
+					if (body.size() > 1024) {
+						write(write_fds[1], body.subStr(0, 1024).c_str(), 1024);
+						body.erase(body.begin(), body.begin() + 1024);
+					}
+					else {
+						write(write_fds[1], body.c_str(), body.size());
+						break;
+					}
+				}
+				::close(write_fds[0]);
+				::close(write_fds[1]);
+				::close(read_fds[1]);
+				_request.clear();
+			} else if (pid == -1) {
+				LOG_ERROR("Failed to fork");
+				return 0;
+			}
+			return pid;
+		}
+		else
+		{
+			_response = ResponseHandle::makeResponse(_request, _port);
+			setKeepAlive();
+			_request.clear();
+			return 0;
+		}
+	}
+}
+
+char **Client::makeArgv(std::string cgiPath)
+{
+	char **argv = new char*[2];
+	argv[0] = new char[cgiPath.size() + 1];
+	argv[1] = NULL;
+
+	strcpy(argv[0], cgiPath.c_str());
+	return argv;
+}
+
+char **Client::makeEnvp(std::string pathInfo)
+{
+	Server server = Config::getServer(_port);
+	if (_request.getHeader("Method") == "GET" || _request.getHeader("Method") == "POST")
+	{
+		// cgi에서 사용
+		setenv("REQUEST_METHOD", _request.getHeader("Method").c_str(), 1);
+		// query_string
+		// content_type
+		// content_length
+		// path_info
+		// cig-path뒤에 오는 하위 path
+		LOG_WARNING("수정해야함");
+		LOG_WARNING("pathInfo: " + pathInfo);
+		LOG_WARNING("query: " + _request.getHeader("Query"));
+		if (_request.getHeader("Method") == "GET") {
+			setenv("QUERY_STRING", _request.getHeader("Query").c_str(), 1);
+		}
+		setenv("PATH_INFO", pathInfo.c_str(), 1);
+
+		// setenv("AUTH_TYPE", "", 1);
+		setenv("GATEWAY_INTERFACE", "CGI/1.1", 1);
+		setenv("HTTP_ACCEPT", "Accept", 1);
+		setenv("HTTP_ACCEPT_CHARSET", _request.getHeader("Accept-Charset").c_str(), 1);
+		setenv("HTTP_ACCEPT_ENCODING", _request.getHeader("Accept-Encoding").c_str(), 1);
+		setenv("HTTP_ACCEPT_LANGUAGE", _request.getHeader("Accept-Language").c_str(), 1);
+		// setenv("HTTP_FORWARDED", "", 1);
+		setenv("HTTP_HOST", _request.getHeader("Host").c_str(), 1);
+		setenv("HTTP_PROXY_AUTHORIZATION", _request.getHeader("Proxy-Authorization").c_str(), 1);
+		setenv("HTTP_USER_AGENT", _request.getHeader("User-Agent").c_str(), 1);
+		// root + PATH_INFO
+		// setenv("PATH_TRANSLATED", server.getRootPath().c_str(), 1);
+		// 		client ip
+		// setenv("REMOTE_ADDR", "", 1);
+		// host -> client ip
+		// setenv("REMOTE_HOST", "host", 1);
+		setenv("REMOTE_USER", "", 1);
+		// cgi-path
+		// setenv("SCRIPT_NAME", "name", 1);
+		setenv("SERVER_NAME", server.getName().c_str(), 1);
+		setenv("SERVER_PORT", server.getPort().c_str(), 1);
+		setenv("SERVER_PROTOCOL", "HTTP/1.1", 1);
+		setenv("SERVER_SOFTWARE", "42Webserv", 1);
+		setenv("HTTP_COOKIE", _request.getHeader("Cookie").c_str(), 1);
+		// setenv("WEBTOP_USER", "ligin username", 1);
+
+		setenv("MAX_LENGTH", String::Itos(server.getBodySize()).c_str(), 1);
+		setenv("SERVER_ADMIN", "", 1);
+		setenv("DOCUMENT_ROOT", server.getRootPath().c_str(), 1);
+		setenv("HTTP_CONNECTION", _request.getHeader("Connection").c_str(), 1);
+		setenv("HTTP_REFERER", _request.getHeader("Referer").c_str(), 1);
+		setenv("HTTP_PRAGMA", _request.getHeader("Cache-Control").c_str(), 1);
+		setenv("HTTP_KEEP_ALIVE", _request.getHeader("Keep-Alive").c_str(), 1);
+	}
+	// if (_request.getHeader("Method") == "GET") {
+	// 	// query_string
+	// 	// ?
+	// 	setenv("QUERY_STRING", "", 1);
+	// }
+	if (_request.getHeader("Method") == "POST" ) {
+		setenv("CONTENT_LENGTH", _request.getHeader("Content-Length").c_str(), 1);
+		setenv("CONTENT_TYPE", _request.getHeader("Content-Type").c_str(), 1);
+	}
+	extern char **environ;
+	return (environ);
+}
+
+void Client::makeCgiResponse()
+{
+	// make response
+	LOG_DEBUG("CGI response parsing");
+	char buffer[BUFFER_SIZE];
+	while (1)
+	{
+		int bytes = ::read(read_fds[0], buffer, BUFFER_SIZE);
+		if (bytes == -1)
+		{
+			LOG_ERROR("Failed to read from pipe");
+			break;
+		}
+		if (bytes == 0)
+		{
+			break;
+		}
+		_response += std::string(buffer, bytes);
+	}
+	// close pipe
+	if (::close(read_fds[0]) == -1)
+	{
+			LOG_ERROR("Failed to close read end of pipe");
+	}
+	setKeepAlive();
 }

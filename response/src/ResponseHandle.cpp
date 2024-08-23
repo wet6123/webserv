@@ -9,7 +9,12 @@ namespace ResponseHandle {
 Handler::Handler(const Request &request, const std::string& port) : _request(request), _port(port)
 {
 	requestInit();
-	_server = Config::getServer(_requestData.port);
+	try {
+		_server = Config::getServer(_requestData.port);
+	}
+	catch (const Status &e) {
+		LOG_FATAL("Handler::Handler: Error getting server: " + String::Itos(e));
+	}
 
 }
 /**
@@ -135,12 +140,17 @@ void Handler::initPathFromLocation() {
 	_query = _requestData.uri.find("?") != std::string::npos ? _requestData.uri.substr(_requestData.uri.find("?") + 1) : "";
 
 	_requestData.uri = _requestData.uri.substr(0, _requestData.uri.find("?"));
-	
-	_server = Config::getServer(_port);
+	try {
+		_server = Config::getServer(_port);
+	}
+	catch (const Status &e) {
+		LOG_FATAL("Handler::initPathFromLocation: Error getting server: " + String::Itos(e));
+		throw InternalServerError_500;
+	}
 
 	if (_server.getRootPath().empty())
 	{
-		LOG_ERROR("Handler::initPathFromLocation: Server root path is empty.");
+		LOG_WARNING("Handler::initPathFromLocation: Server root path is empty.");
 		throw InternalServerError_500;
 	}
 
@@ -154,9 +164,10 @@ void Handler::initPathFromLocation() {
 	LOG_DEBUG("Handler::initPathFromLocation: Location: " + _location.getUriPath());
 
 	_filePath = getFilePath(_requestData.uri);
+	LOG_DEBUG("Handler::initPathFromLocation: File path: " + _filePath);
 	if (_filePath.empty())
 	{
-		LOG_ERROR("Handler::initPathFromLocation: File path is empty.");
+		LOG_WARNING("Handler::initPathFromLocation: File path is empty.");
 		throw InternalServerError_500;
 	}
 
@@ -184,7 +195,7 @@ void Handler::initPathFromLocation() {
 	} else {
 		if (FileSystem::ExistDir(_filePath) == false && FileSystem::ExistFile(_filePath) == false) {
 			if (_location.getIsAutoindex() == true) {
-				handleAutoIndex(_filePath.substr(0, _filePath.find_last_of('/')));
+				_filePath.substr(0, _filePath.find_last_of('/'));
 			} else {
 				throw NotFound_404;
 			}
@@ -211,12 +222,14 @@ std::string Handler::getFilePath(const std::string& uri) {
 	std::string filePath;
 	// CGI 처리
 	if (!_location.getCgiPath().empty()) {
+		LOG_WARNING("CGI Path is Empty");
 		std::string cgiPath = Utils::normalizePath(_location.getCgiPath());
 		size_t lastSlash = uri.find_last_of("/");
 		if (uri.substr(0, lastSlash).find(".") != std::string::npos) {
 			// pathInfo가 존재하는 경우
 			_scriptName = uri.substr(0, lastSlash);
 			_pathInfo = uri.substr(lastSlash);
+			LOG_WARNING("Path Info: " + _pathInfo);
 		} else {
 			_scriptName = uri;
 			_pathInfo = "";
@@ -234,7 +247,7 @@ std::string Handler::getFilePath(const std::string& uri) {
 	LOG_DEBUG("Base path: " + baseFilePath);
 	char buf[PATH_MAX];
 	if (realpath(baseFilePath.c_str(), buf) == NULL) {
-		LOG_ERROR("Handler::getFilePath: realpath failed.");
+		LOG_WARNING("Handler::getFilePath: realpath failed.");
 		throw InternalServerError_500;
 	}
 
@@ -303,11 +316,6 @@ Response Handler::handleRedirect()
  * 
 */
 String::BinaryBuffer Handler::handleGetRequest() {
-
-	// If-Modified-Since 또는 If-None-Match 헤더 처리
-	// etag가 우선순위가 더 높음
-	LOG_DEBUG("ETag: " + _requestData.etag);
-	LOG_DEBUG("If-None-Match: " + _requestData.if_none_match);
 	if (!_requestData.if_none_match.empty() && _requestData.if_none_match == Utils::etag(_filePath))
 	{
 		LOG_DEBUG("ETag Matched");
@@ -378,12 +386,6 @@ String::BinaryBuffer Handler::handleGetRequest() {
 		} else {
 			_response.setHeader("Content-Language", "en-US");
 		}
-		
-		// if (!_requestData.accept_encoding.empty()) {
-		// 	_response.setHeader("Content-Encoding", _requestData.accept_encoding);
-		// } else {
-		// 	_response.setHeader("Content-Encoding", "identity");
-		// }
 
 		_response.setHeader("Content-Disposition", "inline");
 	}
@@ -426,10 +428,10 @@ String::BinaryBuffer Handler::handleGetRequest() {
 
 String::BinaryBuffer Handler::handlePostRequest()
 {
-	// 리다이렉트 처리
-	if (!_location.getRedirect().second.empty()) {
-		return handleRedirect().getResponses();
-	}
+	// // 리다이렉트 처리
+	// if (!_location.getRedirect().second.empty()) {
+	// 	return handleRedirect().getResponses();
+	// }
 
 	// Content-Length 확인
 	if (_requestData.content_length < 0) {
@@ -441,34 +443,20 @@ String::BinaryBuffer Handler::handlePostRequest()
 		throw PayloadTooLarge_413;
 	}
 
-	// 파일 경로 설정 및 확장자 확인
-	std::string filePath = _filePath;
-	std::string extension = Utils::getFileExtension(filePath);
-
-	// 파일 쓰기 작업
-	std::ofstream file(filePath.c_str(), std::ios::binary | std::ios::app);
-	if (!file.is_open()) {
-		throw InternalServerError_500;
-	}
-
-	String::BinaryBuffer body;
-
-	file.write(&body[0], _requestData.content_length);
-	file.close();
-
 	// 응답 본문 생성
-	std::string responseBody = "Resource created successfully.\n";
-	responseBody += "Location: " + _location.getUriPath() + "/" + Utils::getFileName(filePath) + "\n";
-	responseBody += "Size: " + String::Itos(body.size()) + " bytes\n";
+	std::string responseBody = "Resource saved successfully.\n";
+	responseBody += "Size: " + String::Itos(_requestData.content_length) + " bytes\n";
 
 	// 응답 설정
-	_response.setStatusCode(Created_201);
-	_response.setHeader("Date", Utils::getCurTime());
+	_response.setStatusCode(OK_200);
+	// LOG_ERROR(_response.getResponses().str());
+	_response.setHeader("Content-Length", String::Itos(responseBody.length()));
+	// LOG_ERROR(_response.getResponses().str());
+	_response.setHeader("Connection", _requestData.connection);
+	// LOG_ERROR(_response.getResponses().str());
+	_response.setHeader("Server", "42Webserv");
 	_response.setHeader("Content-Type", "text/plain");
-	_response.setHeader("Content-Length", String::Itos(responseBody.size()));
-	_response.setHeader("Location", _location.getUriPath() + "/" + Utils::getFileName(filePath));
-	_response.setHeader("Last-Modified", Utils::lastModify(filePath));
-	_response.setHeader("ETag", Utils::etag(filePath));
+	_response.setHeader("Date", Utils::getCurTime());
 	_response.setBody(responseBody);
 	return _response.getResponses();
 }
@@ -540,6 +528,7 @@ void Handler::handleAutoIndex(const std::string &servRoot)
 		_response.setBody(body.str());
 		_response.setHeader("Content-Length", String::Itos(body.str().length()));
 		_response.setHeader("Connection", _requestData.connection);
+		_response.setHeader("Server", "42Webserv");
 	}
 }
 
@@ -579,10 +568,6 @@ String::BinaryBuffer Handler::handleDeleteRequest()
 	}
 	return _response.getResponses();
 }
-
-// String::BinaryBuffer Handler::handleDownloadRequest() {
-// 	std::string filenName = Utils::getFileName(_filePath);
-// }
 
 } // namespace ResponseHandle
 

@@ -16,11 +16,14 @@ class ClientManager
     void closeAllClients();
     int  receiveFromClient(FD client_fd);
     int  sendToClient(FD client_fd);
-    bool isDone(FD client_fd);
+    bool isReqDone(FD client_fd);
+    bool isResDone(FD client_fd);
     bool isKeepAlive(FD client_fd);
+    pid_t makeResponse(FD client_fd);
+    void handleCgiResponse(FD client_fd);
 
   private:
-    std::vector<Client*> _clientList;
+    std::map<FD, Client*> _clientList;
 };
 
 #endif

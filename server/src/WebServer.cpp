@@ -71,7 +71,7 @@ void WebServer::run()
   while (1) {
     events_size = kevent(_kq, &_changeList[0], _changeList.size(), event_list, MAXEVENTS, NULL);
     if (events_size == -1) {
-      LOG_ERROR("Kevent Error");
+      LOG_WARNING("Kevent Error");
       break;
     }
 
@@ -80,9 +80,9 @@ void WebServer::run()
     for (int i = 0; i < events_size; i++) {
       current_event = &event_list[i];
 
-      LOG_DEBUG("Event: " + std::to_string(i) + " Ident: " + std::to_string(current_event->ident) + " Filter: " + std::to_string(current_event->filter));
+      LOG_DEBUG("Event: " + std::to_string(i) + " Ident: " + std::to_string(current_event->ident) + " Filter: " + std::to_string(current_event->filter) + " Actions: " + std::to_string(current_event->flags));
       if (current_event->flags & EV_ERROR) {
-        LOG_ERROR("Error on event. Ident: " + std::to_string(current_event->ident) + " " + strerror(errno));
+        LOG_WARNING("Error on event. Ident: " + std::to_string(current_event->ident) + " " + strerror(errno));
       }
 
       if (current_event->filter == EVFILT_READ) {
@@ -90,6 +90,7 @@ void WebServer::run()
         if (ServerSocket *server = isServer(current_event->ident)) {
           FD client_fd = server->accept();
           std::string client_port = server->getPort();
+		  LOG_DEBUG("Client Port: " + client_port);
           client_manager.addClient(client_fd, client_port);
           addChangeList(client_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
           addChangeList(client_fd, EVFILT_WRITE, EV_ADD | EV_DISABLE, 0, 0, NULL);
@@ -101,41 +102,73 @@ void WebServer::run()
           // close_client
           // 조건을 좀 더 세분화
 
-          // 0 -> disconnect
           // -1 -> wait
-          // 0 > -> receiving
-          if (byte == 0) {
-            addChangeList(current_event->ident, EVFILT_READ, EV_DELETE, 0, 0, NULL);
-            addChangeList(current_event->ident, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
-            client_manager.closeClient(current_event->ident);
+          // 0 -> disconnect -> isKeepAlive check 필요, 얘는 없어지고 res 다 보내고 삭제하는게 맞지 않나?
+          // isReqDone -> request parsing done
+          // over 0 -> receiving
+          if (byte == -1) {
+            LOG_DEBUG("Request parsing Wait");
           }
-          if (client_manager.isDone(current_event->ident)) {
+          else if (byte == 0) {
+            client_manager.closeClient(current_event->ident);
+			LOG_INFO("Client closed");
+          }
+          else if (client_manager.isReqDone(current_event->ident)) {
             LOG_DEBUG("Request parsing Done");
-            addChangeList(current_event->ident, EVFILT_READ, EV_DISABLE, 0, 0, NULL);
-            addChangeList(current_event->ident, EVFILT_WRITE, EV_ENABLE, 0, 0, NULL);
+            // make response
+            pid_t pid = client_manager.makeResponse(current_event->ident);
+            if (pid > 1) {
+              // cgi
+              _pidList[pid] = current_event->ident;
+            //   LOG_DEBUG("CGI response making");
+            //   LOG_INFO("CGI pid: " + std::to_string(pid));
+              addChangeList(current_event->ident, EVFILT_READ, EV_DISABLE, 0, 0, NULL);
+              addChangeList(pid, EVFILT_PROC, EV_ADD, NOTE_EXIT, 0, NULL);
+            }
+            else if (pid == 0) {
+              // normal response
+            //   LOG_DEBUG("Normal response making");
+              addChangeList(current_event->ident, EVFILT_READ, EV_DISABLE, 0, 0, NULL);
+              addChangeList(current_event->ident, EVFILT_WRITE, EV_ENABLE, 0, 0, NULL);
+            } else {
+            //   LOG_ERROR("Failed to make response");
+            }
+          }
+          else {
+            LOG_DEBUG("Continue request parsing");
           }
         }
       } else if (current_event->filter == EVFILT_WRITE) {
         // client
         if (client_manager.isClient(current_event->ident)) {
-          // is_cgi -> cgi
-          // else -> make_res
           // send
-          int byte = client_manager.sendToClient(current_event->ident);
-          LOG_DEBUG("byte write: " + std::to_string(byte));
-          
-          if (client_manager.isKeepAlive(current_event->ident)) {
+          int bytes = client_manager.sendToClient(current_event->ident);
+          LOG_DEBUG("byte write: " + std::to_string(bytes));
+          if (client_manager.isKeepAlive(current_event->ident)
+            && client_manager.isResDone(current_event->ident)
+          ) {
 			      LOG_INFO("Keep Alive");
-            addChangeList(current_event->ident, EVFILT_WRITE, EV_DISABLE, 0, 0, NULL);
             addChangeList(current_event->ident, EVFILT_READ, EV_ENABLE, 0, 0, NULL);
-          }
-          else {
+            addChangeList(current_event->ident, EVFILT_WRITE, EV_DISABLE, 0, 0, NULL);
+          } else if (client_manager.isKeepAlive(current_event->ident) == false
+            && client_manager.isResDone(current_event->ident)
+          ) {
 			      LOG_INFO("Close");
             client_manager.closeClient(current_event->ident);
           }
         }
+      } else if (current_event->filter == EVFILT_PROC && current_event->fflags & NOTE_EXIT){
+        // cgi
+        pid_t pid = current_event->ident;
+        LOG_DEBUG("CGI response made");
+        waitpid(pid, NULL, 0);
+        LOG_DEBUG("process exit");
+        client_manager.handleCgiResponse(_pidList[pid]);
+        // 자동으로 큐에서 삭제된다. (https://forums.freebsd.org/threads/how-to-use-kevent-confused-by-manpage.92419/)
+        // addChangeList(current_event->ident, EVFILT_PROC, EV_DELETE, 0, 0, NULL);
+        addChangeList(_pidList[pid], EVFILT_WRITE, EV_ENABLE, 0, 0, NULL);
       } else {
-        LOG_ERROR("Unknown event");
+        LOG_WARNING("Unknown event: Ident " + std::to_string(current_event->ident) + " Filter " + std::to_string(current_event->filter) + " Actions " + std::to_string(current_event->flags));
       }
     }
   }

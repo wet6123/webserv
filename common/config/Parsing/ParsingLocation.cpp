@@ -34,7 +34,7 @@ LocationData makeLocationData(Dict dict) {
       std::string value = values[size++];
       if (value.compare("on") && value.compare("off"))
         ErrorLog::fatal("location autoindex value must on or off", __FILE__, __LINE__);
-      data.isAutoindex = value.compare("on");
+      data.isAutoindex = !value.compare("on");
     } else if (!key.compare("cgi-path")) {
       data.cgiPath = values[size++];
     } else if (!key.compare("return")) {
@@ -81,20 +81,23 @@ void recursiveLocationParsing(String::Reader &sr, Dict &dict, Location &ret) {
   recursiveLocationParsing(sr, dict, ret);
 }
 
-std::string extractUriPath(String::Reader &sr) {
+std::string extractUriPath(String::Reader &sr, bool &isRegex) {
   size_t pos = sr.tellg();
   std::string ret = "";
 
   int startBlockPos = findStartBlockPos(sr);
   ret = String::Trim(sr.subStr(pos, startBlockPos - pos));
-  if (String::StartWith(ret, "~ \\") == true)
+  if (String::StartWith(ret, "~ \\") == true) {
+	isRegex = true;
     ret = ret.substr(3);
+  }
   sr.seekg(startBlockPos + 1);
   return ret;
 }
 
 Location parseLocation(String::Reader &sr) {
-  std::string uri = extractUriPath(sr);
+	bool isRegex = false;
+  std::string uri = extractUriPath(sr, isRegex);
   size_t endPos = findEndBlockPos(sr);
   size_t startPos = sr.tellg();
   std::string locationText = sr.subStr(startPos, endPos - startPos);
@@ -106,6 +109,10 @@ Location parseLocation(String::Reader &sr) {
 
   LocationData data = makeLocationData(dict);
   data.uriPath = uri;
+  data.isRegex = isRegex;
+  std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!" << isRegex << std::endl;
+
+
   ret.setData(data);
 
   sr.seekg(endPos + 1);

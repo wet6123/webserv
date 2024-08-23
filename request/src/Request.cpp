@@ -3,12 +3,28 @@
 
 Request::Request(PORT port) : _port(port), _state(HEADERS), _contentLength(0), _maxRequestSize(10 * 1024 * 1024)  {
 	_buffer.reserve(1024);
-	Server tmp = Config::getServer(port);
-	if (tmp.getName() == "") {
-		LOG_ERROR("Request::Request: Server not found.");
-		throw NotFound_404;
+	Server tmp;
+	try {
+		tmp = Config::getServer(port);
 	}
-	_maxBodySize = Config::getServer(port).getBodySize();
+	catch (const Status &e) {
+		LOG_FATAL("Request::Request: Error getting server: " + String::Itos(e));
+	}
+	if (tmp.getName() == "") {
+		LOG_FATAL("Request::Request: Server not found.");
+	}
+	try {
+		_maxBodySize = Config::getServer(port).getBodySize();
+
+	}
+	catch (const Status &e) {
+		LOG_FATAL("Request::Request: Error getting server body size: " + String::Itos(e));
+	}
+	LOG_DEBUG("Request::Request: Request object created.");
+	LOG_DEBUG("Request::Request: Maximum request size: " + String::Itos(_maxRequestSize));
+	if (_maxBodySize == 0) {
+		_maxBodySize = 10 * 1024 * 1024;
+	}
 }
 
 Request::Request(const Request& other) : _state(other._state), _contentLength(other._contentLength), _maxRequestSize(other._maxRequestSize), _maxBodySize(other._maxBodySize) {
@@ -94,7 +110,7 @@ void Request::parseBufferedData(const BinaryBuffer& buffer) {
 	LOG_DEBUG(buffer.str());
 	LOG_DEBUG("Request::parseBufferedData: Parsing request data.");
 	if (_buffer.size() + buffer.size() > _maxRequestSize) {
-		LOG_ERROR("Request::parseBufferedData: Request size exceeds maximum size.");
+		LOG_WARNING("Request::parseBufferedData: Request size exceeds maximum size.");
 		throw PayloadTooLarge_413;
 		return;
 	}
@@ -146,8 +162,9 @@ bool Request::parseHeaders() {
 			return false;
 		}
 
-		if (line.size() < 2) {
-			continue;
+		if (line[line.size() - 2] != '\r') {
+			LOG_ERROR("Request::parseHeaders: Invalid request header format.");
+			throw BadRequest_400;
 		}
 
 		if (line == "\r\n") {
@@ -156,7 +173,13 @@ bool Request::parseHeaders() {
 		}
 
 		if (_headers.empty()) {
-			parseRequestLine(line.str());
+			try {
+				parseRequestLine(line.str());
+			}
+			catch (const Status &e) {
+				LOG_WARNING("Request::parseHeaders: Error parsing request line: " + String::Itos(e));
+				throw e;
+			}
 		} else {
 			parseRequestHeader(line.str());
 		}
@@ -175,7 +198,7 @@ void Request::finishHeaders() {
 			_state = BODY;
 		}
 		catch (std::exception& e) {
-			LOG_ERROR("Request::finishHeaders: Invalid content length.");
+			LOG_WARNING("Request::finishHeaders: Invalid content length.");
 			throw BadRequest_400;
 		}
 	} else if (getHeader("Transfer-Encoding") == "chunked") {
@@ -183,7 +206,7 @@ void Request::finishHeaders() {
 	} else if (Method == "GET") {
 		_state = DONE;
 	} else {
-		LOG_ERROR("Request::finishHeaders: Invalid request.");
+		LOG_WARNING("Request::finishHeaders: Invalid request.");
 		throw BadRequest_400;
 	}
 }
@@ -195,31 +218,43 @@ void Request::parseRequestLine(const std::string& line) {
 	std::istringstream iss(line);
 	std::string method, uri, version;
 	if (!(iss >> method >> uri >> version) || iss.fail() ){
-		LOG_ERROR("Request::parseRequestLine: Invalid request line format.");
+		LOG_WARNING("Request::parseRequestLine: Invalid request line format.");
 		throw MisdirectedRequest_421;
 	}
 
 	if (method != "GET" && method != "POST" && method != "PUT" && method != "DELETE") {
-		LOG_ERROR("Request::parseRequestLine: Invalid request method.");
+		LOG_WARNING("Request::parseRequestLine: Invalid request method.");
 		throw MethodNotAllowed_405;
 	}
 
 	if (version != "HTTP/1.1") {
-		LOG_ERROR("Request::parseRequestLine: Invalid request version.");
+		LOG_WARNING("Request::parseRequestLine: Invalid request version.");
 		throw HttpVersionNotSupported_505;
 	}
 
 	if (uri.size() > 1024) {
-		LOG_ERROR("Request::parseRequestLine: Request URI exceeds maximum size.");
+		LOG_WARNING("Request::parseRequestLine: Request URI exceeds maximum size.");
 		throw UriTooLong_414;
 	}
-
-	int allowMethod = Config::getServer(_port).getLocation(uri).getMethods();
+	int allowMethod;
+	try {
+		if (uri.find("?") != std::string::npos) {
+			std::string query = uri.substr(uri.find("?") + 1);
+			setHeader("Query", query);
+			uri = uri.substr(0, uri.find("?"));
+		}
+		LOG_WARNING("Request::parseRequestLine: " + uri);
+		allowMethod = Config::getServer(_port).getLocation(uri).getMethods();
+	}
+	catch (const Status &e) {
+		LOG_WARNING("Request::parseRequestLine: Error getting server location: " + String::Itos(e));
+		throw e;
+	}
 	if ((method == "GET" && !(allowMethod & (1 << GET))) ||
 		(method == "POST" && !(allowMethod & (1 << POST))) ||
 		(method == "PUT" && !(allowMethod & (1 << PUT))) ||
 		(method == "DELETE" && !(allowMethod & (1 << DELETE)))) {
-		LOG_ERROR("Request::parseRequestLine: Method not allowed.");
+		LOG_WARNING("Request::parseRequestLine: Method not allowed.");
 		throw MethodNotAllowed_405;
 	}
 	setHeader("Method", method);
@@ -235,7 +270,7 @@ void Request::parseRequestLine(const std::string& line) {
 void Request::parseRequestHeader(const std::string& line) {
 	size_t pos = line.find(":");
 	if (pos == std::string::npos) {
-		LOG_ERROR("Request::parseRequestHeader: Invalid request header format.");
+		LOG_WARNING("Request::parseRequestHeader: Invalid request header format.");
 		throw BadRequest_400;
 	}
 
@@ -246,12 +281,12 @@ void Request::parseRequestHeader(const std::string& line) {
 	value = String::Trim(value);
 
 	if (key.empty() || value.empty()) {
-		LOG_ERROR("Request::parseRequestHeader: Invalid request header format.");
+		LOG_WARNING("Request::parseRequestHeader: Invalid request header format.");
 		throw BadRequest_400;
 	}
 
 	if (value.size() > 1024) {
-		LOG_ERROR("Request::parseRequestHeader: Request header value exceeds maximum size.");
+		LOG_WARNING("Request::parseRequestHeader: Request header value exceeds maximum size.");
 		throw RequestHeaderFieldsTooLarge_431;
 	}
 
@@ -266,7 +301,7 @@ void Request::parseRequestHeader(const std::string& line) {
 bool Request::parseBody() {
 	if (_contentLength > _maxBodySize) {
 
-		LOG_ERROR("Request::parseBody: Request body size exceeds maximum size.");
+		LOG_WARNING("Request::parseBody: Request body size exceeds maximum size.");
 		throw PayloadTooLarge_413;
 	}
 	if (_buffer.size() >= _contentLength) {
@@ -276,6 +311,7 @@ bool Request::parseBody() {
 			_buffer.clear();
 			_state = DONE;
 		} else {
+			LOG_WARNING("Request::parseBody: Invalid request body format.");
 			throw BadRequest_400;
 		}
 	}
